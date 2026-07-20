@@ -1,18 +1,17 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
-import { watchDebounced } from "@vueuse/core";
-import type { IMonster } from "@/Module/Bestiary/types";
-import BasePagination from "@/Module/Pagination/BasePagination.vue";
-import DataTable, { type DataTableSortEvent } from "primevue/datatable";
-import Column from "primevue/column";
-import type { IPaginatedResponse } from "@/Module/Pagination/types";
-import type { Monster } from "@/Module/EncounterManager/types";
-import { AxiosError } from "axios";
-import { resoleMonsterImageUrl } from "@/Module/Bestiary/util/monsterImageResolver";
-import BaseDrawer from "@/Module/Drawer/BaseDrawer.vue";
 import MonsterDetails from "@/Module/Bestiary/MonsterDetails.vue";
 import { useMonsterStore } from "@/Module/Bestiary/store/useMonsterStore";
+import type { IMonster } from "@/Module/Bestiary/types";
+import { resoleMonsterImageUrl } from "@/Module/Bestiary/util/monsterImageResolver";
+import BaseDrawer from "@/Module/Drawer/BaseDrawer.vue";
+import type { Monster } from "@/Module/EncounterManager/types";
+import BasePagination from "@/Module/Pagination/BasePagination.vue";
+import type { IPaginatedResponse } from "@/Module/Pagination/types";
+import BaseTable, { type TableColumn } from "@/Module/Table/BaseTable.vue";
+import { watchDebounced } from "@vueuse/core";
+import { AxiosError } from "axios";
 import { storeToRefs } from "pinia";
+import { computed, ref, watch } from "vue";
 
 function isPaginatedResponse(val: unknown): val is IPaginatedResponse<Monster> {
 	return !(val instanceof AxiosError);
@@ -59,9 +58,17 @@ const monsters = computed(() =>
 
 const selectedMonster = ref<IMonster | null>(null);
 
-function onSort(e: DataTableSortEvent) {
-	filter.sortBy = typeof e.sortField === "string" ? e.sortField : undefined;
-	filter.sortOrder = e.sortOrder === 1 ? "asc" : "desc";
+const columns: TableColumn[] = [
+	{ key: "cr", header: "CR", sortField: "crValue", sortable: true, class: "w-32 text-center font-semibold" },
+	{ key: "name", header: "Name", sortField: "name", sortable: true },
+	{ key: "type", header: "Type" },
+	{ key: "size", header: "Size", sortField: "size", sortable: true },
+	{ key: "alignment", header: "Alignment" },
+];
+
+function onSort(e: { sortField: string; sortOrder: "asc" | "desc" }) {
+	filter.sortBy = e.sortField;
+	filter.sortOrder = e.sortOrder;
 	filter.page = 1;
 }
 
@@ -83,7 +90,7 @@ watch(showMonsterDetails, (visible) => {
 <template>
 	<div class="flex flex-col gap-3 mt-4">
 
-		<BaseDrawer v-model:visible="showMonsterDetails" position="right" :pt="{ root: { style: 'width: 45vw' } }">
+		<BaseDrawer v-model:visible="showMonsterDetails" position="right" class="w-[45vw]">
 			<MonsterDetails v-if="selectedMonster"
 				:monster="selectedMonster"
 			/>
@@ -93,71 +100,51 @@ watch(showMonsterDetails, (visible) => {
 			{{ error?.message }}
 		</div>
 
-		<DataTable
+		<BaseTable
 			v-else-if="monsters"
 			:loading="isLoading"
-			:value="monsters.data"
-			class="text-sm"
-			striped-rows
+			:items="monsters.data"
+			:columns="columns"
+			:sort-field="filter.sortBy"
+			:sort-order="filter.sortOrder"
 			v-model:selection="selectedMonster"
-			:selection-mode="'single'"
 			@sort="onSort"
 		>
-			<Column
-				header="CR"
-				sort-field="crValue"
-				:sortable="true"
-				class="w-32 text-center font-semibold"
-			>
-				<template #body="{ data: monster }">
-					<div class="flex gap-2 items-center">
-						<img
-							:src="
-								resoleMonsterImageUrl(
-									monster.source,
-									monster.name,
-								)
-							"
-							class="h-9 w-8 shrink-0 rounded object-cover bg-gray-100"
-						/>
-						<div>
-							{{ monster.challengeRating }}
-						</div>
+			<template #cell-cr="{ item: monster }">
+				<div class="flex gap-2 items-center">
+					<img
+						:src="
+							resoleMonsterImageUrl(
+								monster.source,
+								monster.name,
+							)
+						"
+						class="h-9 w-8 shrink-0 rounded object-cover bg-gray-100"
+					/>
+					<div>
+						{{ monster.challengeRating }}
 					</div>
-				</template>
-			</Column>
+				</div>
+			</template>
 
-			<Column header="Name" sort-field="name" :sortable="true">
-				<template #body="{ data: monster }">
-					<div class="flex items-center gap-2">
-						<span class="font-medium">{{ monster.name }}</span>
-					</div>
-				</template>
-			</Column>
+			<template #cell-name="{ item: monster }">
+				<div class="flex items-center gap-2">
+					<span class="font-medium">{{ monster.name }}</span>
+				</div>
+			</template>
 
-			<Column header="Type">
-				<template #body="{ data: monster }">
-					{{
-						monster.type
-							? monster.type
-							: ((monster as any).monsterType?.name ?? "—")
-					}}
-				</template>
-			</Column>
+			<template #cell-type="{ item: monster }">
+				{{
+					monster.type
+						? monster.type
+						: ((monster as any).monsterType?.name ?? "—")
+				}}
+			</template>
 
-			<Column
-				header="Size"
-				field="size"
-				sort-field="size"
-				:sortable="true"
-			/>
-
-			<Column header="Alignment">
-				<template #body="{ data: monster }">
-					{{ monster.alignment }}
-				</template>
-			</Column>
-		</DataTable>
+			<template #cell-alignment="{ item: monster }">
+				{{ monster.alignment }}
+			</template>
+		</BaseTable>
 
 		<BasePagination
 			v-if="monsters"

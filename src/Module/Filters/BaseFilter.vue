@@ -2,10 +2,10 @@
 import BaseFilterItem from "@/Module/Filters/BaseFilterItem.vue";
 import { ref } from "vue";
 
-interface IFilteritem {
+export interface IFilteritem {
 	id: string;
 	name: string;
-	color: "red" | "blue" | "blue";
+	color?: "red" | "blue" | "blue";
 }
 
 const props = defineProps<{

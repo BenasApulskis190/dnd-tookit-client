@@ -1,10 +1,9 @@
 <script lang="ts" setup>
-import type { Spell } from "@/Module/EncounterManager/types"
-import { getSpellLevelLabel, getSpellSchoolName } from "@/services/spellService"
-import SpellDetails from "./SpellDetails.vue"
+import type { ISpell } from "@/Module/Spells/types"
 import ListItem from "@/Module/List/ListItem.vue"
+import SpellDetails from "./SpellDetails.vue"
 
-defineProps<{ spell: Spell }>()
+defineProps<{ spell: ISpell }>()
 </script>
 
 <template>
@@ -15,8 +14,8 @@ defineProps<{ spell: Spell }>()
 					{{ spell.name }}
 				</p>
 				<p class="text-xs text-gray-400">
-					{{ getSpellLevelLabel(spell.level) }} ·
-					{{ getSpellSchoolName(spell.school) }} · {{ spell.source }}
+					{{ spell.level === 0 ? "Cantrip" : `Level ${spell.level}` }}
+					<template v-if="spell.school"> · {{ spell.school }}</template>
 				</p>
 			</div>
 		</template>

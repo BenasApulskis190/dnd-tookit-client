@@ -1,35 +1,22 @@
 <script lang="ts" setup>
-import { getAllFeats } from "@/services/featService"
-import type { Feat } from "@/Module/EncounterManager/types"
-import List from "@/Module/List/List.vue"
-import FeatItem from "@/Module/Feats/FeatItem.vue"
+import FeatFilter from "@/Module/Feats/FeatFilter.vue"
+import FeatTable from "@/Module/Feats/FeatTable.vue"
+import { useFeatStore } from "@/Module/Feats/store/useFeatStore"
+import BaseSearchBar from "@/Module/SearchBar/BaseSearchBar.vue"
+import { storeToRefs } from "pinia"
+import { ref } from "vue"
 
-const feats = getAllFeats()
+const featStore = useFeatStore()
+const { isLoading } = storeToRefs(featStore)
 
-function filtered(search: string): Feat[] {
-	const q = search.toLowerCase().trim()
-	if (!q) return feats
-	return feats.filter(
-		(f) =>
-			f.name.toLowerCase().includes(q) ||
-			f.source.toLowerCase().includes(q),
-	)
-}
+const filter = ref<{ source: string | null }>({ source: null })
+const search = ref("")
 </script>
 
 <template>
-	<List :search-by="['name', 'source']">
-		<template #header="{ search }">
-			<p class="mt-1 text-xs text-gray-400">
-				{{ filtered(search).length }} feats
-			</p>
-		</template>
-		<template #default="{ search }">
-			<FeatItem
-				v-for="feat in filtered(search)"
-				:key="feat.name + feat.source"
-				:feat="feat"
-			/>
-		</template>
-	</List>
+	<div>
+		<BaseSearchBar v-model="search" class="mb-4" :loading="isLoading" />
+		<FeatFilter class="mb-4" @source-select="(source) => (filter.source = source)" />
+		<FeatTable :featFilter="filter" :search="search" />
+	</div>
 </template>

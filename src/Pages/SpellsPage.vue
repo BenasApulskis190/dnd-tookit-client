@@ -1,45 +1,29 @@
 <script lang="ts" setup>
-import { getAllSpells, getSpellSchoolName } from "@/services/spellService"
-import type { Spell } from "@/Module/EncounterManager/types"
-import List from "@/Module/List/List.vue"
-import SpellItem from "@/Module/Spells/SpellItem.vue"
+import SpellFilter from "@/Module/Spells/SpellFilter.vue"
+import SpellTable from "@/Module/Spells/SpellTable.vue"
+import { useSpellStore } from "@/Module/Spells/store/useSpellStore"
+import BaseSearchBar from "@/Module/SearchBar/BaseSearchBar.vue"
+import { storeToRefs } from "pinia"
+import { ref } from "vue"
 
-const spells = getAllSpells()
+const spellStore = useSpellStore()
+const { isLoading } = storeToRefs(spellStore)
 
-function filtered(search: string): Spell[] {
-	const q = search.toLowerCase().trim()
-
-	if (!q) {
-		return spells
-	}
-
-	return spells.filter((s) => {
-		return (
-			s.name.toLowerCase().includes(q) ||
-			getSpellSchoolName(s.school).toLowerCase().includes(q) ||
-			s.source.toLowerCase().includes(q) ||
-			s.classes?.fromClassList?.some((c) =>
-				c.name.toLowerCase().includes(q),
-			)
-		)
-	})
-}
+const filter = ref<{ level: number | null; school: string | null }>({
+	level: null,
+	school: null,
+})
+const search = ref("")
 </script>
 
 <template>
-	<List :search-by="['name', 'school', 'class', 'source']">
-		<template #header="{ search }">
-			<p class="mt-1 text-xs text-gray-400">
-				{{ filtered(search).length }} spells
-			</p>
-		</template>
-
-		<template #default="{ search }">
-			<SpellItem
-				v-for="spell in filtered(search)"
-				:key="spell.name + spell.source"
-				:spell="spell"
-			/>
-		</template>
-	</List>
+	<div>
+		<BaseSearchBar v-model="search" class="mb-4" :loading="isLoading" />
+		<SpellFilter
+			class="mb-4"
+			@level-select="(level) => (filter.level = level)"
+			@school-select="(school) => (filter.school = school)"
+		/>
+		<SpellTable :spellFilter="filter" :search="search" />
+	</div>
 </template>

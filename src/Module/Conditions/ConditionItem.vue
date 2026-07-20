@@ -1,9 +1,9 @@
 <script lang="ts" setup>
-import type { Condition } from "@/Module/EncounterManager/types"
+import type { ICondition } from "@/Module/Conditions/types"
 import ConditionDetails from "./ConditionDetails.vue"
 import ListItem from "@/Module/List/ListItem.vue"
 
-defineProps<{ condition: Condition }>()
+defineProps<{ condition: ICondition }>()
 </script>
 
 <template>

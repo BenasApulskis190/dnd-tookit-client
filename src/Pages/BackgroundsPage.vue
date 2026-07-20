@@ -1,35 +1,25 @@
 <script lang="ts" setup>
-import { getAllBackgrounds } from "@/services/backgroundService"
-import type { Background } from "@/Module/EncounterManager/types"
-import List from "@/Module/List/List.vue"
-import BackgroundItem from "@/Module/Backgrounds/BackgroundItem.vue"
+import BackgroundFilter from "@/Module/Backgrounds/BackgroundFilter.vue"
+import BackgroundTable from "@/Module/Backgrounds/BackgroundTable.vue"
+import { useBackgroundStore } from "@/Module/Backgrounds/store/useBackgroundStore"
+import BaseSearchBar from "@/Module/SearchBar/BaseSearchBar.vue"
+import { storeToRefs } from "pinia"
+import { ref } from "vue"
 
-const backgrounds = getAllBackgrounds()
+const backgroundStore = useBackgroundStore()
+const { isLoading } = storeToRefs(backgroundStore)
 
-function filtered(search: string): Background[] {
-	const q = search.toLowerCase().trim()
-	if (!q) return backgrounds
-	return backgrounds.filter(
-		(b) =>
-			b.name.toLowerCase().includes(q) ||
-			b.source.toLowerCase().includes(q),
-	)
-}
+const filter = ref<{ source: string | null }>({ source: null })
+const search = ref("")
 </script>
 
 <template>
-	<List :search-by="['name', 'source']">
-		<template #header="{ search }">
-			<p class="mt-1 text-xs text-gray-400">
-				{{ filtered(search).length }} backgrounds
-			</p>
-		</template>
-		<template #default="{ search }">
-			<BackgroundItem
-				v-for="background in filtered(search)"
-				:key="background.name + background.source"
-				:background="background"
-			/>
-		</template>
-	</List>
+	<div>
+		<BaseSearchBar v-model="search" class="mb-4" :loading="isLoading" />
+		<BackgroundFilter
+			class="mb-4"
+			@source-select="(source) => (filter.source = source)"
+		/>
+		<BackgroundTable :backgroundFilter="filter" :search="search" />
+	</div>
 </template>

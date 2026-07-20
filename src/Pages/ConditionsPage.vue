@@ -1,31 +1,25 @@
 <script lang="ts" setup>
-import { getAllConditions } from "@/services/conditionService"
-import type { Condition } from "@/Module/EncounterManager/types"
-import List from "@/Module/List/List.vue"
-import ConditionItem from "@/Module/Conditions/ConditionItem.vue"
+import ConditionFilter from "@/Module/Conditions/ConditionFilter.vue"
+import ConditionTable from "@/Module/Conditions/ConditionTable.vue"
+import { useConditionStore } from "@/Module/Conditions/store/useConditionStore"
+import BaseSearchBar from "@/Module/SearchBar/BaseSearchBar.vue"
+import { storeToRefs } from "pinia"
+import { ref } from "vue"
 
-const conditions = getAllConditions()
+const conditionStore = useConditionStore()
+const { isLoading } = storeToRefs(conditionStore)
 
-function filtered(search: string): Condition[] {
-	const q = search.toLowerCase().trim()
-	if (!q) return conditions
-	return conditions.filter((c) => c.name.toLowerCase().includes(q))
-}
+const filter = ref<{ source: string | null }>({ source: null })
+const search = ref("")
 </script>
 
 <template>
-	<List :search-by="['name']">
-		<template #header="{ search }">
-			<p class="mt-1 text-xs text-gray-400">
-				{{ filtered(search).length }} conditions
-			</p>
-		</template>
-		<template #default="{ search }">
-			<ConditionItem
-				v-for="condition in filtered(search)"
-				:key="condition.name + condition.source"
-				:condition="condition"
-			/>
-		</template>
-	</List>
+	<div>
+		<BaseSearchBar v-model="search" class="mb-4" :loading="isLoading" />
+		<ConditionFilter
+			class="mb-4"
+			@source-select="(source) => (filter.source = source)"
+		/>
+		<ConditionTable :conditionFilter="filter" :search="search" />
+	</div>
 </template>

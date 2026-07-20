@@ -1,37 +1,22 @@
 <script lang="ts" setup>
-import { getAllItems, getItemTypeName } from "@/services/itemService"
-import type { Item } from "@/Module/EncounterManager/types"
-import List from "@/Module/List/List.vue"
-import ItemItem from "@/Module/Items/ItemItem.vue"
+import ItemFilter from "@/Module/Items/ItemFilter.vue"
+import ItemTable from "@/Module/Items/ItemTable.vue"
+import { useItemStore } from "@/Module/Items/store/useItemStore"
+import BaseSearchBar from "@/Module/SearchBar/BaseSearchBar.vue"
+import { storeToRefs } from "pinia"
+import { ref } from "vue"
 
-const items = getAllItems()
+const itemStore = useItemStore()
+const { isLoading } = storeToRefs(itemStore)
 
-function filtered(search: string): Item[] {
-	const q = search.toLowerCase().trim()
-	if (!q) return items
-	return items.filter(
-		(item) =>
-			item.name.toLowerCase().includes(q) ||
-			getItemTypeName(item.type).toLowerCase().includes(q) ||
-			(item.rarity ?? "").toLowerCase().includes(q) ||
-			item.source.toLowerCase().includes(q),
-	)
-}
+const filter = ref<{ rarity: string | null }>({ rarity: null })
+const search = ref("")
 </script>
 
 <template>
-	<List :search-by="['name', 'type', 'rarity', 'source']">
-		<template #header="{ search }">
-			<p class="mt-1 text-xs text-gray-400">
-				{{ filtered(search).length }} items
-			</p>
-		</template>
-		<template #default="{ search }">
-			<ItemItem
-				v-for="item in filtered(search)"
-				:key="item.name + item.source"
-				:item="item"
-			/>
-		</template>
-	</List>
+	<div>
+		<BaseSearchBar v-model="search" class="mb-4" :loading="isLoading" />
+		<ItemFilter class="mb-4" @rarity-select="(rarity) => (filter.rarity = rarity)" />
+		<ItemTable :itemFilter="filter" :search="search" />
+	</div>
 </template>

@@ -1,31 +1,22 @@
 <script lang="ts" setup>
-import { getAllClasses } from "@/services/classService"
-import type { DnDClass } from "@/Module/EncounterManager/types"
-import List from "@/Module/List/List.vue"
-import ClassItem from "@/Module/Classes/ClassItem.vue"
+import ClassFilter from "@/Module/Classes/ClassFilter.vue"
+import ClassTable from "@/Module/Classes/ClassTable.vue"
+import { useClassStore } from "@/Module/Classes/store/useClassStore"
+import BaseSearchBar from "@/Module/SearchBar/BaseSearchBar.vue"
+import { storeToRefs } from "pinia"
+import { ref } from "vue"
 
-const classes = getAllClasses()
+const classStore = useClassStore()
+const { isLoading } = storeToRefs(classStore)
 
-function filtered(search: string): DnDClass[] {
-	const q = search.toLowerCase().trim()
-	if (!q) return classes
-	return classes.filter((c) => c.name.toLowerCase().includes(q))
-}
+const filter = ref<{ source: string | null }>({ source: null })
+const search = ref("")
 </script>
 
 <template>
-	<List :search-by="['name']">
-		<template #header="{ search }">
-			<p class="mt-1 text-xs text-gray-400">
-				{{ filtered(search).length }} classes
-			</p>
-		</template>
-		<template #default="{ search }">
-			<ClassItem
-				v-for="dndClass in filtered(search)"
-				:key="dndClass.name + dndClass.source"
-				:dnd-class="dndClass"
-			/>
-		</template>
-	</List>
+	<div>
+		<BaseSearchBar v-model="search" class="mb-4" :loading="isLoading" />
+		<ClassFilter class="mb-4" @source-select="(source) => (filter.source = source)" />
+		<ClassTable :classFilter="filter" :search="search" />
+	</div>
 </template>

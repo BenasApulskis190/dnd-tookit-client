@@ -1,9 +1,8 @@
 <script lang="ts" setup>
-import type { Background } from "@/Module/EncounterManager/types"
-import BackgroundDetails from "./BackgroundDetails.vue"
+import type { IBackground } from "@/Module/Backgrounds/types"
 import ListItem from "@/Module/List/ListItem.vue"
 
-defineProps<{ background: Background }>()
+defineProps<{ background: IBackground }>()
 </script>
 
 <template>
@@ -23,7 +22,7 @@ defineProps<{ background: Background }>()
 		</template>
 
 		<template #details>
-			<BackgroundDetails :background="background" />
+			<h1>BACKGROUND details</h1>
 		</template>
 	</ListItem>
 </template>
