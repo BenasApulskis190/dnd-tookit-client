@@ -10,12 +10,19 @@ import DashboradPage from "@/Pages/DashboradPage.vue";
 import EncounterBuilder from "@/Pages/EncounterBuilder.vue";
 import SavedEncountersPage from "@/Pages/SavedEncountersPage.vue";
 import BestiaryPage from "@/Pages/BestiaryPage.vue";
+import MonsterDetailView from "@/Module/Bestiary/MonsterDetailView.vue";
 import SpellsPage from "@/Pages/SpellsPage.vue";
+import SpellDetailView from "@/Module/Spells/SpellDetailView.vue";
 import ConditionsPage from "@/Pages/ConditionsPage.vue";
+import ConditionDetailView from "@/Module/Conditions/ConditionDetailView.vue";
 import BackgroundsPage from "@/Pages/BackgroundsPage.vue";
+import BackgroundDetailView from "@/Module/Backgrounds/BackgroundDetailView.vue";
 import FeatsPage from "@/Pages/FeatsPage.vue";
+import FeatDetailView from "@/Module/Feats/FeatDetailView.vue";
 import ClassesPage from "@/Pages/ClassesPage.vue";
+import ClassDetailPage from "@/Pages/ClassDetailPage.vue";
 import ItemsPage from "@/Pages/ItemsPage.vue";
+import ItemDetailView from "@/Module/Items/ItemDetailView.vue";
 import MapsPage from "@/Pages/MapsPage.vue";
 import CombatManager from "@/Pages/CombatManager.vue";
 
@@ -79,6 +86,18 @@ export const routes: RouteRecordRaw[] = [
 			glyph: "☠",
 			color: "var(--c-monster)",
 		},
+		children: [
+			{
+				path: ":id",
+				name: "bestiary-detail",
+				component: MonsterDetailView,
+				meta: {
+					layout: "default",
+					requiresAuth: true,
+					category: "compendum",
+				},
+			},
+		],
 	},
 	{
 		path: "/spells",
@@ -91,6 +110,14 @@ export const routes: RouteRecordRaw[] = [
 			glyph: "✦",
 			color: "var(--c-spell)",
 		},
+		children: [
+			{
+				path: ":id",
+				name: "spells-detail",
+				component: SpellDetailView,
+				meta: { layout: "default", requiresAuth: true, category: "compendum" },
+			},
+		],
 	},
 	{
 		path: "/conditions",
@@ -103,6 +130,14 @@ export const routes: RouteRecordRaw[] = [
 			glyph: "⚡",
 			color: "var(--c-condition)",
 		},
+		children: [
+			{
+				path: ":id",
+				name: "conditions-detail",
+				component: ConditionDetailView,
+				meta: { layout: "default", requiresAuth: true, category: "compendum" },
+			},
+		],
 	},
 	{
 		path: "/backgrounds",
@@ -115,6 +150,14 @@ export const routes: RouteRecordRaw[] = [
 			glyph: "⛩",
 			color: "var(--c-background)",
 		},
+		children: [
+			{
+				path: ":id",
+				name: "backgrounds-detail",
+				component: BackgroundDetailView,
+				meta: { layout: "default", requiresAuth: true, category: "compendum" },
+			},
+		],
 	},
 	{
 		path: "/feats",
@@ -127,6 +170,14 @@ export const routes: RouteRecordRaw[] = [
 			glyph: "★",
 			color: "var(--c-feat)",
 		},
+		children: [
+			{
+				path: ":id",
+				name: "feats-detail",
+				component: FeatDetailView,
+				meta: { layout: "default", requiresAuth: true, category: "compendum" },
+			},
+		],
 	},
 	{
 		path: "/classes",
@@ -141,6 +192,19 @@ export const routes: RouteRecordRaw[] = [
 		},
 	},
 	{
+		// Classes carry far more than a drawer can hold (features + every
+		// subclass), so the detail is its own full page rather than an overlay.
+		path: "/classes/:id",
+		name: "classes-detail",
+		component: ClassDetailPage,
+		meta: {
+			layout: "default",
+			requiresAuth: true,
+			hideFromNav: true,
+			category: "compendum",
+		},
+	},
+	{
 		path: "/items",
 		name: "items",
 		component: ItemsPage,
@@ -151,6 +215,14 @@ export const routes: RouteRecordRaw[] = [
 			glyph: "◈",
 			color: "var(--c-item)",
 		},
+		children: [
+			{
+				path: ":id",
+				name: "items-detail",
+				component: ItemDetailView,
+				meta: { layout: "default", requiresAuth: true, category: "compendum" },
+			},
+		],
 	},
 	{
 		path: "/maps",

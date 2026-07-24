@@ -18,5 +18,6 @@ const search = ref("")
 		<BaseSearchBar v-model="search" class="mb-4" :loading="isLoading" />
 		<ItemFilter class="mb-4" @rarity-select="(rarity) => (filter.rarity = rarity)" />
 		<ItemTable :itemFilter="filter" :search="search" />
+		<router-view />
 	</div>
 </template>

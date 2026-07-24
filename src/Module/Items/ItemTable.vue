@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import ItemDetails from "@/Module/Items/ItemDetails.vue";
 import { useItemStore } from "@/Module/Items/store/useItemStore";
 import type { IItem } from "@/Module/Items/types";
-import BaseDrawer from "@/Module/Drawer/BaseDrawer.vue";
 import BasePagination from "@/Module/Pagination/BasePagination.vue";
 import type { IPaginatedResponse } from "@/Module/Pagination/types";
 import BaseTable, { type TableColumn } from "@/Module/Table/BaseTable.vue";
+import { hasRarity, itemTypeLabel } from "@/Module/Items/util/itemFormat";
 import { watchDebounced } from "@vueuse/core";
 import { AxiosError } from "axios";
 import { storeToRefs } from "pinia";
 import { computed, ref, watch } from "vue";
+import { useRouter } from "vue-router";
 
 function isPaginatedResponse(val: unknown): val is IPaginatedResponse<IItem> {
 	return !(val instanceof AxiosError);
@@ -22,7 +22,7 @@ const props = defineProps<{
 
 const itemStore = useItemStore();
 const { filter } = itemStore;
-const { data, isLoading, isError, error } = storeToRefs(itemStore);
+const { data, isFetching, isError, error } = storeToRefs(itemStore);
 
 watchDebounced(
 	() => props.search,
@@ -44,11 +44,17 @@ const items = computed(() =>
 	data.value && isPaginatedResponse(data.value) ? data.value : null,
 );
 
-const selectedItem = ref<IItem | null>(null);
-const showItemDetails = ref(false);
+const router = useRouter();
 
-watch(selectedItem, (selected) => { if (selected) showItemDetails.value = true; });
-watch(showItemDetails, (visible) => { if (!visible) selectedItem.value = null; });
+// Row selection navigates to the detail child route (/items/:id).
+const selectedItem = ref<IItem | null>(null);
+
+watch(selectedItem, (item) => {
+	if (item) {
+		void router.push({ name: "items-detail", params: { id: item.id } });
+		selectedItem.value = null;
+	}
+});
 
 const columns: TableColumn[] = [
 	{ key: "name", header: "Name", sortField: "name", sortable: true },
@@ -66,20 +72,12 @@ function onSort(e: { sortField: string; sortOrder: "asc" | "desc" }) {
 
 <template>
 	<div class="flex flex-col gap-3 mt-4">
-		<BaseDrawer
-			v-model:visible="showItemDetails"
-			position="right"
-			class="w-[45vw]"
-		>
-			<ItemDetails v-if="selectedItem" :item="selectedItem" />
-		</BaseDrawer>
-
 		<div v-if="isError" class="text-sm text-red-500">{{ error?.message }}</div>
 
 		<BaseTable
-			v-else-if="items"
-			:loading="isLoading"
-			:items="items.data"
+			v-else
+			:loading="isFetching"
+			:items="items?.data ?? []"
 			:columns="columns"
 			:sort-field="filter.sortBy"
 			:sort-order="filter.sortOrder"
@@ -90,8 +88,16 @@ function onSort(e: { sortField: string; sortOrder: "asc" | "desc" }) {
 				<span class="font-medium">{{ item.name }}</span>
 			</template>
 
+			<template #cell-type="{ item }">
+				{{ itemTypeLabel(item.type) || "—" }}
+			</template>
+
 			<template #cell-rarity="{ item }">
-				{{ item.rarity ?? "—" }}
+				{{ hasRarity(item.rarity) ? item.rarity : "—" }}
+			</template>
+
+			<template #cell-source="{ item }">
+				{{ item.source || "—" }}
 			</template>
 		</BaseTable>
 

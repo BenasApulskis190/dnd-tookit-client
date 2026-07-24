@@ -23,5 +23,6 @@ const search = ref<string>("");
 		<BaseSearchBar v-model="search" class="mb-4" :loading="isLoading" />
 		<MonterFilter @filter-select="handleFilterSelect" class="mb-4" />
 		<MonsterTable :monsterFilter="filter" :search="search" />
+		<router-view />
 	</div>
 </template>

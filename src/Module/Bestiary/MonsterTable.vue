@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import MonsterDetails from "@/Module/Bestiary/MonsterDetails.vue";
 import { useMonsterStore } from "@/Module/Bestiary/store/useMonsterStore";
 import type { IMonster } from "@/Module/Bestiary/types";
 import { resoleMonsterImageUrl } from "@/Module/Bestiary/util/monsterImageResolver";
-import BaseDrawer from "@/Module/Drawer/BaseDrawer.vue";
 import type { Monster } from "@/Module/EncounterManager/types";
 import BasePagination from "@/Module/Pagination/BasePagination.vue";
 import type { IPaginatedResponse } from "@/Module/Pagination/types";
@@ -12,6 +10,7 @@ import { watchDebounced } from "@vueuse/core";
 import { AxiosError } from "axios";
 import { storeToRefs } from "pinia";
 import { computed, ref, watch } from "vue";
+import { useRouter } from "vue-router";
 
 function isPaginatedResponse(val: unknown): val is IPaginatedResponse<Monster> {
 	return !(val instanceof AxiosError);
@@ -28,7 +27,7 @@ const monsterStore = useMonsterStore();
 
 const { filter } = monsterStore;
 
-const { data, isLoading, isError, error } = storeToRefs(monsterStore);
+const { data, isFetching, isError, error } = storeToRefs(monsterStore);
 
 watchDebounced(
 	() => props.search,
@@ -56,7 +55,17 @@ const monsters = computed(() =>
 	data.value && isPaginatedResponse(data.value) ? data.value : null,
 );
 
+const router = useRouter();
+
+// Row selection navigates to the detail child route (/bestiary/:id).
 const selectedMonster = ref<IMonster | null>(null);
+
+watch(selectedMonster, (monster) => {
+	if (monster) {
+		void router.push({ name: "bestiary-detail", params: { id: monster.id } });
+		selectedMonster.value = null;
+	}
+});
 
 const columns: TableColumn[] = [
 	{ key: "cr", header: "CR", sortField: "crValue", sortable: true, class: "w-32 text-center font-semibold" },
@@ -72,38 +81,19 @@ function onSort(e: { sortField: string; sortOrder: "asc" | "desc" }) {
 	filter.page = 1;
 }
 
-const showMonsterDetails = ref<boolean>(false);
-
-watch(selectedMonster, (selected) => {
-	if (selected) {
-		showMonsterDetails.value = true;
-	}
-});
-
-watch(showMonsterDetails, (visible) => {
-	if (!visible) {
-		selectedMonster.value = null;
-	}
-});
 </script>
 
 <template>
 	<div class="flex flex-col gap-3 mt-4">
-
-		<BaseDrawer v-model:visible="showMonsterDetails" position="right" class="w-[45vw]">
-			<MonsterDetails v-if="selectedMonster"
-				:monster="selectedMonster"
-			/>
-		</BaseDrawer>
 
 		<div v-if="isError" class="text-sm text-red-500">
 			{{ error?.message }}
 		</div>
 
 		<BaseTable
-			v-else-if="monsters"
-			:loading="isLoading"
-			:items="monsters.data"
+			v-else
+			:loading="isFetching"
+			:items="monsters?.data ?? []"
 			:columns="columns"
 			:sort-field="filter.sortBy"
 			:sort-order="filter.sortOrder"

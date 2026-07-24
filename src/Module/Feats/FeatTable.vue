@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import FeatDetails from "@/Module/Feats/FeatDetails.vue";
 import { useFeatStore } from "@/Module/Feats/store/useFeatStore";
 import type { IFeat } from "@/Module/Feats/types";
-import BaseDrawer from "@/Module/Drawer/BaseDrawer.vue";
 import BasePagination from "@/Module/Pagination/BasePagination.vue";
 import type { IPaginatedResponse } from "@/Module/Pagination/types";
 import BaseTable, { type TableColumn } from "@/Module/Table/BaseTable.vue";
@@ -10,6 +8,7 @@ import { watchDebounced } from "@vueuse/core";
 import { AxiosError } from "axios";
 import { storeToRefs } from "pinia";
 import { computed, ref, watch } from "vue";
+import { useRouter } from "vue-router";
 
 function isPaginatedResponse(val: unknown): val is IPaginatedResponse<IFeat> {
 	return !(val instanceof AxiosError);
@@ -22,7 +21,7 @@ const props = defineProps<{
 
 const featStore = useFeatStore();
 const { filter } = featStore;
-const { data, isLoading, isError, error } = storeToRefs(featStore);
+const { data, isFetching, isError, error } = storeToRefs(featStore);
 
 watchDebounced(
 	() => props.search,
@@ -44,11 +43,17 @@ const feats = computed(() =>
 	data.value && isPaginatedResponse(data.value) ? data.value : null,
 );
 
-const selectedFeat = ref<IFeat | null>(null);
-const showFeatDetails = ref(false);
+const router = useRouter();
 
-watch(selectedFeat, (selected) => { if (selected) showFeatDetails.value = true; });
-watch(showFeatDetails, (visible) => { if (!visible) selectedFeat.value = null; });
+// Row selection navigates to the detail child route (/feats/:id).
+const selectedFeat = ref<IFeat | null>(null);
+
+watch(selectedFeat, (feat) => {
+	if (feat) {
+		void router.push({ name: "feats-detail", params: { id: feat.id } });
+		selectedFeat.value = null;
+	}
+});
 
 const columns: TableColumn[] = [
 	{ key: "name", header: "Name", sortField: "name", sortable: true },
@@ -65,20 +70,12 @@ function onSort(e: { sortField: string; sortOrder: "asc" | "desc" }) {
 
 <template>
 	<div class="flex flex-col gap-3 mt-4">
-		<BaseDrawer
-			v-model:visible="showFeatDetails"
-			position="right"
-			class="w-[45vw]"
-		>
-			<FeatDetails v-if="selectedFeat" :feat="selectedFeat" />
-		</BaseDrawer>
-
 		<div v-if="isError" class="text-sm text-red-500">{{ error?.message }}</div>
 
 		<BaseTable
-			v-else-if="feats"
-			:loading="isLoading"
-			:items="feats.data"
+			v-else
+			:loading="isFetching"
+			:items="feats?.data ?? []"
 			:columns="columns"
 			:sort-field="filter.sortBy"
 			:sort-order="filter.sortOrder"

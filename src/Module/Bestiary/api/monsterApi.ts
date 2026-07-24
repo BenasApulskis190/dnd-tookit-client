@@ -2,6 +2,7 @@ import { api } from "@/api/client";
 
 import type {
 	ICreateMonsterDto,
+	IMonsterDetail,
 	IMonsterFilter,
 	IUpdateMonsterDto,
 } from "@/Module/Bestiary/types";
@@ -17,7 +18,7 @@ export const monstersApi = {
 			.catch((e: AxiosError) => e),
 
 	getById: (id: string) =>
-		api.get<Monster>(`/monsters/${id}`).then((r) => r.data),
+		api.get<IMonsterDetail>(`/monsters/${id}`).then((r) => r.data),
 
 	create: (data: ICreateMonsterDto) =>
 		api.post<Monster>("/monsters", data).then((r) => r.data),

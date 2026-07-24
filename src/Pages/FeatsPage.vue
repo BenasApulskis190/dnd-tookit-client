@@ -18,5 +18,6 @@ const search = ref("")
 		<BaseSearchBar v-model="search" class="mb-4" :loading="isLoading" />
 		<FeatFilter class="mb-4" @source-select="(source) => (filter.source = source)" />
 		<FeatTable :featFilter="filter" :search="search" />
+		<router-view />
 	</div>
 </template>

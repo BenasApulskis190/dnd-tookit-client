@@ -34,7 +34,7 @@ const emit = defineEmits<{ addToEncounter: [monster: Monster] }>()
 		</template>
 
 		<template #details>
-			<MonsterDetails :monster="monster" />
+			<MonsterDetails :id="(monster as { id?: string }).id" />
 		</template>
 	</ListItem>
 </template>

@@ -25,5 +25,6 @@ const search = ref("")
 			@school-select="(school) => (filter.school = school)"
 		/>
 		<SpellTable :spellFilter="filter" :search="search" />
+		<router-view />
 	</div>
 </template>

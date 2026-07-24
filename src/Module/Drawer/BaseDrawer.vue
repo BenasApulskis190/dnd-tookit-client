@@ -18,7 +18,7 @@ defineOptions({ inheritAttrs: false });
 		<Dialog.Content
 			v-bind="$attrs"
 			:class="[
-				'fixed inset-y-0 m-0 h-full max-h-none max-w-none w-full sm:max-w-md bg-bg-elev p-0 shadow-lg',
+				'fixed inset-y-0 m-0 h-full max-h-none max-w-none w-full sm:max-w-lg bg-bg-elev p-0 shadow-lg',
 				'transition-[transform,opacity,overlay,display] duration-200 ease-out [transition-behavior:allow-discrete]',
 				'backdrop:bg-black/50 backdrop:[transition:background-color_200ms_ease-out]',
 				position === 'left'

@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import ClassDetails from "@/Module/Classes/ClassDetails.vue";
 import { useClassStore } from "@/Module/Classes/store/useClassStore";
 import { useClassIcons } from "@/Module/Classes/useClassIcons";
 import type { IClass } from "@/Module/Classes/types";
-import BaseDrawer from "@/Module/Drawer/BaseDrawer.vue";
 import BasePagination from "@/Module/Pagination/BasePagination.vue";
 import type { IPaginatedResponse } from "@/Module/Pagination/types";
 import BaseTable, { type TableColumn } from "@/Module/Table/BaseTable.vue";
@@ -11,6 +9,7 @@ import { watchDebounced } from "@vueuse/core";
 import { AxiosError } from "axios";
 import { storeToRefs } from "pinia";
 import { computed, ref, watch } from "vue";
+import { useRouter } from "vue-router";
 
 function isPaginatedResponse(val: unknown): val is IPaginatedResponse<IClass> {
 	return !(val instanceof AxiosError);
@@ -23,7 +22,7 @@ const props = defineProps<{
 
 const classStore = useClassStore();
 const { filter } = classStore;
-const { data, isLoading, isError, error } = storeToRefs(classStore);
+const { data, isFetching, isError, error } = storeToRefs(classStore);
 const { getClassIcon } = useClassIcons();
 
 watchDebounced(
@@ -46,11 +45,17 @@ const classes = computed(() =>
 	data.value && isPaginatedResponse(data.value) ? data.value : null,
 );
 
-const selectedClass = ref<IClass | null>(null);
-const showClassDetails = ref(false);
+const router = useRouter();
 
-watch(selectedClass, (selected) => { if (selected) showClassDetails.value = true; });
-watch(showClassDetails, (visible) => { if (!visible) selectedClass.value = null; });
+// Row selection navigates to the detail child route (/classes/:id).
+const selectedClass = ref<IClass | null>(null);
+
+watch(selectedClass, (dndClass) => {
+	if (dndClass) {
+		void router.push({ name: "classes-detail", params: { id: dndClass.id } });
+		selectedClass.value = null;
+	}
+});
 
 const columns: TableColumn[] = [
 	{ key: "name", header: "Name", sortField: "name", sortable: true },
@@ -67,20 +72,12 @@ function onSort(e: { sortField: string; sortOrder: "asc" | "desc" }) {
 
 <template>
 	<div class="flex flex-col gap-3 mt-4">
-		<BaseDrawer
-			v-model:visible="showClassDetails"
-			position="right"
-			class="w-[45vw]"
-		>
-			<ClassDetails v-if="selectedClass" :dnd-class="selectedClass" />
-		</BaseDrawer>
-
 		<div v-if="isError" class="text-sm text-red-500">{{ error?.message }}</div>
 
 		<BaseTable
-			v-else-if="classes"
-			:loading="isLoading"
-			:items="classes.data"
+			v-else
+			:loading="isFetching"
+			:items="classes?.data ?? []"
 			:columns="columns"
 			:sort-field="filter.sortBy"
 			:sort-order="filter.sortOrder"

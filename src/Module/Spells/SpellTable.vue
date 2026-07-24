@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import SpellDetails from "@/Module/Spells/SpellDetails.vue";
 import { useSpellStore } from "@/Module/Spells/store/useSpellStore";
 import type { ISpell } from "@/Module/Spells/types";
-import BaseDrawer from "@/Module/Drawer/BaseDrawer.vue";
 import BasePagination from "@/Module/Pagination/BasePagination.vue";
 import type { IPaginatedResponse } from "@/Module/Pagination/types";
 import BaseTable, { type TableColumn } from "@/Module/Table/BaseTable.vue";
@@ -10,6 +8,7 @@ import { watchDebounced } from "@vueuse/core";
 import { AxiosError } from "axios";
 import { storeToRefs } from "pinia";
 import { computed, ref, watch } from "vue";
+import { useRouter } from "vue-router";
 
 function isPaginatedResponse(val: unknown): val is IPaginatedResponse<ISpell> {
 	return !(val instanceof AxiosError);
@@ -25,7 +24,7 @@ const props = defineProps<{
 
 const spellStore = useSpellStore();
 const { filter } = spellStore;
-const { data, isLoading, isError, error } = storeToRefs(spellStore);
+const { data, isFetching, isError, error } = storeToRefs(spellStore);
 
 watchDebounced(
 	() => props.search,
@@ -62,15 +61,16 @@ const spells = computed(() =>
 	data.value && isPaginatedResponse(data.value) ? data.value : null,
 );
 
+const router = useRouter();
+
+// Row selection navigates to the detail child route (/spells/:id).
 const selectedSpell = ref<ISpell | null>(null);
-const showSpellDetails = ref(false);
 
-watch(selectedSpell, (selected) => {
-	if (selected) showSpellDetails.value = true;
-});
-
-watch(showSpellDetails, (visible) => {
-	if (!visible) selectedSpell.value = null;
+watch(selectedSpell, (spell) => {
+	if (spell) {
+		void router.push({ name: "spells-detail", params: { id: spell.id } });
+		selectedSpell.value = null;
+	}
 });
 
 const columns: TableColumn[] = [
@@ -115,21 +115,13 @@ function rangeDisplay(spell: ISpell): string {
 
 <template>
 	<div class="flex flex-col gap-3 mt-4">
-		<BaseDrawer
-			v-model:visible="showSpellDetails"
-			position="right"
-			class="w-[45vw]"
-		>
-			<SpellDetails v-if="selectedSpell" :spell="selectedSpell" />
-		</BaseDrawer>
-
 		<div v-if="isError" class="text-sm text-red-500">
 			{{ error?.message }}
 		</div>
 		<BaseTable
-			v-else-if="spells"
-			:loading="isLoading"
-			:items="spells.data"
+			v-else
+			:loading="isFetching"
+			:items="spells?.data ?? []"
 			:columns="columns"
 			:sort-field="filter.sortBy"
 			:sort-order="filter.sortOrder"
@@ -155,13 +147,13 @@ function rangeDisplay(spell: ISpell): string {
 					<span
 						v-if="spell.concentration"
 						title="Concentration"
-						class="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-semibold"
+						class="text-xs px-1.5 py-0.5 rounded bg-feat/15 text-feat font-semibold"
 						>C</span
 					>
 					<span
 						v-if="spell.ritual"
 						title="Ritual"
-						class="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-semibold"
+						class="text-xs px-1.5 py-0.5 rounded bg-class/15 text-class font-semibold"
 						>R</span
 					>
 				</div>

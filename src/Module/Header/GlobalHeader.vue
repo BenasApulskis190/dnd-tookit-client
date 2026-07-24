@@ -1,6 +1,8 @@
 <script lang="ts" setup>
+import { onBeforeUnmount, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import MainLogo from "@/Module/Brand/MainLogo.vue";
+import GlobalSearch from "@/Module/GlobalSearch/GlobalSearch.vue";
 
 defineProps<{
 	collapsed?: boolean;
@@ -10,16 +12,34 @@ defineProps<{
 
 const route = useRoute();
 const router = useRouter();
+
+const searchVisible = ref(false);
+
+function handleSeach() {
+	searchVisible.value = true;
+}
+
+function onKeydown(e: KeyboardEvent) {
+	if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+		e.preventDefault();
+		searchVisible.value = !searchVisible.value;
+	}
+}
+
+onMounted(() => window.addEventListener("keydown", onKeydown));
+onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 </script>
 
 <template>
+
+	<GlobalSearch v-model:visible="searchVisible" />
 	<MainLogo :collapsed="collapsed" @click="router.push('/')" />
 
 	<nav class="crumbs">
 		<span class="crumb-current">{{ route.name ? String(route.name) : "" }}</span>
 	</nav>
 
-	<button class="search-trigger" type="button">
+	<button class="search-trigger" type="button" @click="handleSeach">
 		<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 			<circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
 		</svg>

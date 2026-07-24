@@ -53,6 +53,12 @@ export interface IClass {
 	createdAt: string;
 }
 
+/** What `GET /classes/:id` returns — the class plus its features and subclasses. */
+export interface IClassDetail extends IClass {
+	features: IClassFeature[];
+	subclasses: (ISubclass & { features: IClassFeature[] })[];
+}
+
 export interface IClassFilter {
 	q?: string;
 	source?: string;

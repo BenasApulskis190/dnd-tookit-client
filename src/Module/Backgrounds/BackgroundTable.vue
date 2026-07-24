@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import BackgroundDetails from "@/Module/Backgrounds/BackgroundDetails.vue";
 import { useBackgroundStore } from "@/Module/Backgrounds/store/useBackgroundStore";
 import type { IBackground } from "@/Module/Backgrounds/types";
-import BaseDrawer from "@/Module/Drawer/BaseDrawer.vue";
 import BasePagination from "@/Module/Pagination/BasePagination.vue";
 import type { IPaginatedResponse } from "@/Module/Pagination/types";
 import BaseTable, { type TableColumn } from "@/Module/Table/BaseTable.vue";
@@ -10,6 +8,7 @@ import { watchDebounced } from "@vueuse/core";
 import { AxiosError } from "axios";
 import { storeToRefs } from "pinia";
 import { computed, ref, watch } from "vue";
+import { useRouter } from "vue-router";
 
 function isPaginatedResponse(
 	val: unknown,
@@ -26,7 +25,7 @@ const props = defineProps<{
 
 const backgroundStore = useBackgroundStore();
 const { filter } = backgroundStore;
-const { data, isLoading, isError, error } = storeToRefs(backgroundStore);
+const { data, isFetching, isError, error } = storeToRefs(backgroundStore);
 
 watchDebounced(
 	() => props.search,
@@ -54,15 +53,15 @@ const backgrounds = computed(() =>
 	data.value && isPaginatedResponse(data.value) ? data.value : null,
 );
 
+const router = useRouter();
+
 const selectedBackground = ref<IBackground | null>(null);
-const showBackgroundDetails = ref(false);
 
-watch(selectedBackground, (selected) => {
-	if (selected) showBackgroundDetails.value = true;
-});
-
-watch(showBackgroundDetails, (visible) => {
-	if (!visible) selectedBackground.value = null;
+watch(selectedBackground, (background) => {
+	if (background) {
+		void router.push({ name: "backgrounds-detail", params: { id: background.id } });
+		selectedBackground.value = null;
+	}
 });
 
 const columns: TableColumn[] = [
@@ -79,25 +78,14 @@ function onSort(e: { sortField: string; sortOrder: "asc" | "desc" }) {
 
 <template>
 	<div class="flex flex-col gap-3 mt-4">
-		<BaseDrawer
-			v-model:visible="showBackgroundDetails"
-			position="right"
-			class="w-[45vw]"
-		>
-			<BackgroundDetails
-				v-if="selectedBackground"
-				:background="selectedBackground"
-			/>
-		</BaseDrawer>
-
 		<div v-if="isError" class="text-sm text-red-500">
 			{{ error?.message }}
 		</div>
 
 		<BaseTable
-			v-else-if="backgrounds"
-			:loading="isLoading"
-			:items="backgrounds.data"
+			v-else
+			:loading="isFetching"
+			:items="backgrounds?.data ?? []"
 			:columns="columns"
 			:sort-field="filter.sortBy"
 			:sort-order="filter.sortOrder"

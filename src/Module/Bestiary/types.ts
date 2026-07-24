@@ -91,6 +91,71 @@ export interface IMonster {
 	mythic?: IMonsterTrait[];
 }
 
+/**
+ * What `GET /monsters/:id` actually returns — the flat Prisma row, not the
+ * nested 5etools `IMonster` shape above. `tags`, `alignment`, `skills` and the
+ * trait/action `description` fields are Postgres `Json` columns and arrive as
+ * JSON-encoded strings; run them through `parseJsonField` before use.
+ */
+export interface IMonsterEntry {
+	id: string;
+	monsterId: string;
+	name: string;
+	/** Actions only: "action" | "bonus" | "reaction" | "legendary" | "mythic". */
+	type?: string;
+	description: unknown;
+}
+
+export interface IMonsterDetail {
+	id: string;
+	name: string;
+	source: string;
+	size: string;
+	typeId: string;
+	tags: unknown;
+	alignment: unknown;
+	armorClass?: number | null;
+	armorType?: string | null;
+	hitPointsAvg?: number | null;
+	hitPointsFormula?: string | null;
+	speedWalk?: number | null;
+	speedFly?: number | null;
+	speedSwim?: number | null;
+	speedClimb?: number | null;
+	speedBurrow?: number | null;
+	strScore?: number | null;
+	dexScore?: number | null;
+	conScore?: number | null;
+	intScore?: number | null;
+	wisScore?: number | null;
+	chaScore?: number | null;
+	strSave?: number | null;
+	dexSave?: number | null;
+	conSave?: number | null;
+	intSave?: number | null;
+	wisSave?: number | null;
+	chaSave?: number | null;
+	skills: unknown;
+	senses?: string | null;
+	passivePerception?: number | null;
+	languages?: string | null;
+	challengeRating: string;
+	crValue?: number | null;
+	page?: number | null;
+	monsterType?: { id: string; name: string };
+	traits?: IMonsterEntry[];
+	actions?: IMonsterEntry[];
+	spells?: IMonsterSpell[];
+}
+
+/** Spells a spellcaster monster can cast, as returned by `GET /monsters/:id`. */
+export interface IMonsterSpell {
+	id: string;
+	name: string;
+	/** 0 = cantrip. */
+	level: number;
+}
+
 export interface ICreateMonsterDto {
 	name: string;
 	source: string;

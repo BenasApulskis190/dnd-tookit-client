@@ -581,7 +581,7 @@ function deathSaveStatus(c: Combatant): "dying" | "stable" | "dead" {
 					</button>
 				</div>
 				<div class="p-4">
-					<MonsterDetails :monster="selectedMonster" />
+					<MonsterDetails :id="(selectedMonster as { id?: string }).id" />
 				</div>
 			</div>
 		</Transition>

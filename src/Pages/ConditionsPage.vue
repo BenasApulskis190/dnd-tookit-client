@@ -21,5 +21,6 @@ const search = ref("")
 			@source-select="(source) => (filter.source = source)"
 		/>
 		<ConditionTable :conditionFilter="filter" :search="search" />
+		<router-view />
 	</div>
 </template>

@@ -1,4 +1,8 @@
 <script lang="ts" setup generic="T extends Record<string, any>">
+import { computed } from "vue";
+import DiceLoader from "@/Module/Loading/DiceLoader.vue";
+import SkeletonRows from "@/Module/Loading/SkeletonRows.vue";
+
 export interface TableColumn {
 	key: string;
 	header: string;
@@ -40,11 +44,17 @@ function onHeaderClick(column: TableColumn) {
 function onRowClick(item: T) {
 	emit("update:selection", item === props.selection ? null : item);
 }
+
+const showDiceLoader = computed(
+	() => props.loading && props.items.length === 0,
+);
+const showSkeleton = computed(() => props.loading && props.items.length > 0);
 </script>
 
 <template>
 	<div class="relative rounded-lg border border-border overflow-hidden">
 		<div
+			v-if="!showDiceLoader"
 			:class="scrollable ? 'overflow-y-auto' : ''"
 			:style="scrollable ? { maxHeight } : undefined"
 		>
@@ -74,7 +84,14 @@ function onRowClick(item: T) {
 						</th>
 					</tr>
 				</thead>
-				<tbody>
+				<tbody v-if="showSkeleton">
+					<tr>
+						<td :colspan="columns.length" class="p-0">
+							<SkeletonRows :columns="columns.length" />
+						</td>
+					</tr>
+				</tbody>
+				<tbody v-else>
 					<tr
 						v-for="(item, index) in items"
 						:key="rowKey ? rowKey(item) : index"
@@ -95,11 +112,6 @@ function onRowClick(item: T) {
 			</table>
 		</div>
 
-		<div
-			v-if="loading"
-			class="absolute inset-0 flex items-center justify-center bg-bg/60 text-sm text-ink-mute"
-		>
-			Loading…
-		</div>
+		<DiceLoader v-if="showDiceLoader" />
 	</div>
 </template>
