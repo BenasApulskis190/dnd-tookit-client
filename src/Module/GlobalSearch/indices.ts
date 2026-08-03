@@ -13,7 +13,7 @@ export const INDEX_META = {
 	feats: { label: "Feats", route: "/feats", detail: "feats-detail", color: "var(--c-feat)", glyph: "★" },
 	classes: { label: "Classes", route: "/classes", detail: "classes-detail", color: "var(--c-class)", glyph: "⚜" },
 	items: { label: "Items", route: "/items", detail: "items-detail", color: "var(--c-item)", glyph: "◈" },
-	races: { label: "Races", route: null, detail: null, color: "var(--accent)", glyph: "❖" },
+	races: { label: "Races", route: "/races", detail: "races-detail", color: "var(--c-race)", glyph: "❖" },
 } as const;
 
 export type IndexName = keyof typeof INDEX_META;

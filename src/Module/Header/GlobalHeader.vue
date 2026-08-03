@@ -1,8 +1,10 @@
 <script lang="ts" setup>
 import { onBeforeUnmount, onMounted, ref } from "vue";
+import { storeToRefs } from "pinia";
 import { useRoute, useRouter } from "vue-router";
 import MainLogo from "@/Module/Brand/MainLogo.vue";
 import GlobalSearch from "@/Module/GlobalSearch/GlobalSearch.vue";
+import { useAuthStore } from "@/stores/auth";
 
 defineProps<{
 	collapsed?: boolean;
@@ -12,6 +14,8 @@ defineProps<{
 
 const route = useRoute();
 const router = useRouter();
+const authStore = useAuthStore();
+const { isLoggedIn, user } = storeToRefs(authStore);
 
 const searchVisible = ref(false);
 
@@ -48,6 +52,21 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 	</button>
 
 	<div class="header-actions">
+		<RouterLink
+			v-if="!isLoggedIn"
+			to="/login"
+			class="rounded-lg border border-border px-3 py-1.5 text-sm text-ink hover:bg-bg-elev transition-colors"
+		>
+			Login
+		</RouterLink>
+		<RouterLink
+			v-else
+			to="/profile"
+			class="rounded-lg border border-border px-3 py-1.5 text-sm text-ink hover:bg-bg-elev transition-colors"
+		>
+			{{ user?.name ?? "Profile" }}
+		</RouterLink>
+
 		<div class="divider-v" />
 		<button class="icon-btn menu-btn" type="button" :aria-label="'Open menu'" @click="toggleSidebar?.()">
 			<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

@@ -8,6 +8,8 @@ import {
 	damageLabel,
 	hasRarity,
 	itemSubtitle,
+	itemTypesLabel,
+	valueLabel,
 } from "@/Module/Items/util/itemFormat";
 
 const props = defineProps<{ item: IItem }>();
@@ -20,12 +22,13 @@ const stats = computed(() => {
 	// Core fields are always shown (— when absent) so the grid stays even; the
 	// combat fields only appear for items they apply to.
 	const rows: { label: string; value: string }[] = [
-		{ label: "Value", value: item.value || "—" },
+		{ label: "Value", value: valueLabel(item) },
 		{ label: "Weight", value: item.weight != null ? `${item.weight} lb.` : "—" },
 		{ label: "Rarity", value: hasRarity(item.rarity) ? item.rarity! : "—" },
 		{ label: "Attunement", value: attunementLabel(item) },
 	];
 
+	if (item.types.length > 1) rows.push({ label: "Types", value: itemTypesLabel(item) });
 	if (damageLabel(item)) rows.push({ label: "Damage", value: damageLabel(item) });
 	if (item.armorClass != null)
 		rows.push({ label: "Armor Class", value: String(item.armorClass) });

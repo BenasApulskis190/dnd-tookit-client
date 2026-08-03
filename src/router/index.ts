@@ -5,6 +5,7 @@ import {
 } from "vue-router";
 
 import LoginPage from "@/Pages/LoginPage.vue";
+import ProfilePage from "@/Pages/ProfilePage.vue";
 import { PageCategories, type PageLayoutKey } from "@/type";
 import DashboradPage from "@/Pages/DashboradPage.vue";
 import EncounterBuilder from "@/Pages/EncounterBuilder.vue";
@@ -23,10 +24,17 @@ import ClassesPage from "@/Pages/ClassesPage.vue";
 import ClassDetailPage from "@/Pages/ClassDetailPage.vue";
 import ItemsPage from "@/Pages/ItemsPage.vue";
 import ItemDetailView from "@/Module/Items/ItemDetailView.vue";
+import RacesPage from "@/Pages/RacesPage.vue";
+import RaceDetailView from "@/Module/Races/RaceDetailView.vue";
+import NpcsPage from "@/Pages/NpcsPage.vue";
+import NpcDetailView from "@/Module/Npcs/NpcDetailView.vue";
+import AdventuresPage from "@/Pages/AdventuresPage.vue";
+import AdventureDetailPage from "@/Pages/AdventureDetailPage.vue";
+import AdventureSectionPage from "@/Pages/AdventureSectionPage.vue";
 import MapsPage from "@/Pages/MapsPage.vue";
 import CombatManager from "@/Pages/CombatManager.vue";
 
-export {};
+
 
 declare module "vue-router" {
 	interface RouteMeta {
@@ -225,6 +233,82 @@ export const routes: RouteRecordRaw[] = [
 		],
 	},
 	{
+		path: "/races",
+		name: "races",
+		component: RacesPage,
+		meta: {
+			layout: "default",
+			requiresAuth: true,
+			category: "compendum",
+			glyph: "❖",
+			color: "var(--c-race)",
+		},
+		children: [
+			{
+				path: ":id",
+				name: "races-detail",
+				component: RaceDetailView,
+				meta: { layout: "default", requiresAuth: true, category: "compendum" },
+			},
+		],
+	},
+	{
+		path: "/npcs",
+		name: "npcs",
+		component: NpcsPage,
+		meta: {
+			layout: "default",
+			requiresAuth: true,
+			category: "compendum",
+			glyph: "♟",
+			color: "var(--c-npc)",
+		},
+		children: [
+			{
+				path: ":id",
+				name: "npcs-detail",
+				component: NpcDetailView,
+				meta: { layout: "default", requiresAuth: true, category: "compendum" },
+			},
+		],
+	},
+	{
+		path: "/adventures",
+		name: "adventures",
+		component: AdventuresPage,
+		meta: {
+			layout: "default",
+			requiresAuth: true,
+			category: "compendum",
+			glyph: "⚑",
+			color: "var(--c-adventure)",
+		},
+	},
+	{
+		// Adventures carry chapters + NPCs, far more than a drawer can hold, so
+		// the detail is its own full page (mirrors the Classes pattern).
+		path: "/adventures/:id",
+		name: "adventures-detail",
+		component: AdventureDetailPage,
+		meta: {
+			layout: "default",
+			requiresAuth: true,
+			hideFromNav: true,
+			category: "compendum",
+		},
+	},
+	{
+		path: "/adventures/:id/sections/:ordinal",
+		name: "adventures-section",
+		component: AdventureSectionPage,
+		meta: {
+			layout: "default",
+			requiresAuth: true,
+			hideFromNav: true,
+			category: "compendum",
+		},
+	},
+	{
 		path: "/maps",
 		name: "maps",
 		component: MapsPage,
@@ -255,6 +339,17 @@ export const routes: RouteRecordRaw[] = [
 			layout: "auth",
 			hideFromNav: true,
 			category: "compendum",
+		},
+	},
+	{
+		path: "/profile",
+		name: "profile",
+		component: ProfilePage,
+		meta: {
+			layout: "default",
+			requiresAuth: true,
+			hideFromNav: true,
+			category: "overview",
 		},
 	},
 ];

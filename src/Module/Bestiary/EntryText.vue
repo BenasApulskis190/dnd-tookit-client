@@ -7,7 +7,10 @@ export type EntryAccent =
 	| "spell"
 	| "item"
 	| "condition"
-	| "feat";
+	| "feat"
+	| "race"
+	| "npc"
+	| "adventure";
 
 // Roll buttons pick up the accent of whatever entity's text they render.
 const props = withDefaults(
@@ -30,6 +33,9 @@ const ACCENTS: Record<EntryAccent, string> = {
 	item: "text-item hover:bg-item/15",
 	condition: "text-condition hover:bg-condition/15",
 	feat: "text-feat hover:bg-feat/15",
+	race: "text-race hover:bg-race/15",
+	npc: "text-npc hover:bg-npc/15",
+	adventure: "text-adventure hover:bg-adventure/15",
 };
 
 const rollClass = computed(() => ACCENTS[props.accent] ?? ACCENTS.monster);

@@ -25,7 +25,18 @@ import {
 	subtitle,
 } from "@/Module/Bestiary/util/monsterFormat";
 
-const props = defineProps<{ id?: string }>();
+// `offset` is how far *this* panel itself sits from the screen edge, and
+// `panelWidth` is its own *measured* rendered width (both passed down by
+// whichever drawer wraps this component) — its spells cascade off the real
+// combined value, minus a small peek, rather than a guessed vw step.
+const props = withDefaults(defineProps<{ id?: string; offset?: string; panelWidth?: number }>(), {
+	offset: "0px",
+	panelWidth: 0,
+});
+const CASCADE_PEEK_PX = 60;
+const spellOffset = computed(
+	() => `calc(${props.offset} + ${Math.max(props.panelWidth - CASCADE_PEEK_PX, 0)}px)`,
+);
 
 const route = useRoute();
 const monsterId = computed(() => props.id ?? String(route.params.id ?? ""));
@@ -119,7 +130,7 @@ const spellGroups = computed(() => {
 		}));
 });
 
-// Clicking a spell opens it in a left drawer alongside this (right-hand) one.
+// Clicking a spell opens it one cascade step further left of this panel.
 const selectedSpellId = ref<string | null>(null);
 const spellDrawerVisible = ref(false);
 
@@ -282,7 +293,8 @@ function openSpell(id: string) {
 			<SpellDrawer
 				v-model:visible="spellDrawerVisible"
 				:id="selectedSpellId"
-				position="left"
+				position="right"
+				:offset="spellOffset"
 			/>
 		</article>
 	</div>

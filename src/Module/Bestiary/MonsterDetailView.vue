@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import BaseDrawer from "@/Module/Drawer/BaseDrawer.vue";
 import MonsterDetails from "@/Module/Bestiary/MonsterDetails.vue";
@@ -15,10 +15,19 @@ const visible = computed({
 		if (!open) void router.push({ name: "bestiary" });
 	},
 });
+
+// Forwarded into MonsterDetails so a spell it opens cascades off this
+// panel's actual measured width.
+const panelWidth = ref(0);
 </script>
 
 <template>
-	<BaseDrawer v-model:visible="visible" position="right" class="w-[45vw]">
-		<MonsterDetails />
+	<BaseDrawer
+		v-model:visible="visible"
+		position="right"
+		class="w-[45vw]"
+		@update:width="(w) => (panelWidth = w)"
+	>
+		<MonsterDetails :panel-width="panelWidth" />
 	</BaseDrawer>
 </template>

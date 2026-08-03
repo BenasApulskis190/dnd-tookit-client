@@ -23,6 +23,8 @@
 	--pastel-jade: #86efac;
 	--pastel-blush: #fecaca;
 	--pastel-stone: #d6d3d1;
+	--pastel-teal: #5eead4;
+	--pastel-ember: #fdba74;
 
 	--c-spell: var(--pastel-lavender);
 	--c-monster: var(--pastel-rose);
@@ -34,6 +36,8 @@
 	--c-condition: var(--pastel-pink);
 	--c-rule: var(--pastel-blush);
 	--c-background: var(--pastel-jade);
+	--c-npc: var(--pastel-teal);
+	--c-adventure: var(--pastel-ember);
 
 	--accent: var(--pastel-lavender);
 	--accent-soft: color-mix(in srgb, var(--accent) 20%, transparent);
@@ -84,6 +88,8 @@
 	--color-condition: #f9a8d4;
 	--color-rule: #fecaca;
 	--color-background: #86efac;
+	--color-npc: #5eead4;
+	--color-adventure: #fdba74;
 
 	/* accent */
 	--color-accent: #c4b5fd;

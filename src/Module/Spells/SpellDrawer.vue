@@ -9,8 +9,8 @@ import { spellsApi } from "@/Module/Spells/api/spellsApi";
 // Reusable spell drawer driven by an id rather than the route — lets any list
 // (e.g. a monster's spellcasting block) pop a spell open without navigating.
 const props = withDefaults(
-	defineProps<{ id: string | null; position?: "left" | "right" }>(),
-	{ position: "right" },
+	defineProps<{ id: string | null; position?: "left" | "right"; offset?: string }>(),
+	{ position: "right", offset: "0px" },
 );
 
 const visible = defineModel<boolean>("visible", { default: false });
@@ -28,7 +28,7 @@ const spell = computed(() => {
 </script>
 
 <template>
-	<BaseDrawer v-model:visible="visible" :position="position" class="w-[45vw]">
+	<BaseDrawer v-model:visible="visible" :position="position" :offset="offset" class="w-[45vw]">
 		<div v-if="isLoading" class="p-6 text-sm text-ink-faint">Loading…</div>
 		<div v-else-if="isError" class="p-6 text-sm text-red-400">
 			Failed to load spell.

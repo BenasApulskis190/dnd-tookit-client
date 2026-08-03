@@ -1,48 +1,17 @@
 import type { IItem } from "@/Module/Items/types";
 
-const TYPE_NAMES: Record<string, string> = {
-	G: "Adventuring Gear",
-	A: "Ammunition",
-	AF: "Ammunition",
-	AT: "Artisan's Tools",
-	EM: "Eldritch Machine",
-	EXP: "Explosive",
-	FD: "Food & Drink",
-	GS: "Gaming Set",
-	HA: "Heavy Armor",
-	INS: "Instrument",
-	LA: "Light Armor",
-	M: "Melee Weapon",
-	MA: "Medium Armor",
-	MNT: "Mount",
-	GV: "Generic Variant",
-	P: "Potion",
-	R: "Ranged Weapon",
-	RD: "Rod",
-	RG: "Ring",
-	S: "Shield",
-	SC: "Scroll",
-	SCF: "Spellcasting Focus",
-	T: "Tools",
-	TAH: "Tack & Harness",
-	TG: "Trade Good",
-	VEH: "Vehicle (Land)",
-	SHP: "Vehicle (Water)",
-	AIR: "Vehicle (Air)",
-	WD: "Wand",
-	$: "Treasure",
-	OTH: "Other",
-};
+function titleCase(s: string): string {
+	return s.replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
-const DAMAGE_TYPES: Record<string, string> = {
-	B: "bludgeoning",
-	P: "piercing",
-	S: "slashing",
-};
+/** Categories are already clean, lowercase strings from the API ("weapon", "wondrous item") — just title-case for display. */
+export function itemTypeLabel(type: string | null): string {
+	return type ? titleCase(type) : "";
+}
 
-export function itemTypeLabel(code: string | null): string {
-	if (!code) return "";
-	return TYPE_NAMES[code] ?? code;
+/** All categories an item belongs to (a Flame Tongue is both "Weapon" and "Magic Item"). */
+export function itemTypesLabel(item: IItem): string {
+	return (item.types ?? []).map(titleCase).join(", ");
 }
 
 /** Rarity "None"/"Unknown" is placeholder noise for mundane gear — hide it. */
@@ -50,19 +19,35 @@ export function hasRarity(rarity: string | null): boolean {
 	return Boolean(rarity) && rarity !== "None" && !rarity!.startsWith("Unknown");
 }
 
-/** "Melee Weapon, Martial" style subtitle (rarity lives in the stat grid). */
+/** "Martial Melee Weapon" / "Heavy Armor" / "Wondrous Item, Magic Item" subtitle. */
 export function itemSubtitle(item: IItem): string {
-	return [itemTypeLabel(item.type), item.subtype].filter(Boolean).join(", ");
+	if (item.weaponType) {
+		const category = item.weaponCategory ? titleCase(item.weaponCategory) + " " : "";
+		return `${category}${titleCase(item.weaponType)} Weapon`;
+	}
+	if (item.armorType) {
+		return item.armorType === "shield" ? "Shield" : `${titleCase(item.armorType)} Armor`;
+	}
+	return itemTypesLabel(item);
 }
 
 export function damageLabel(item: IItem): string {
 	if (!item.damage) return "";
-	const type = item.damageType
-		? (DAMAGE_TYPES[item.damageType] ?? item.damageType)
-		: "";
-	return type ? `${item.damage} ${type}` : item.damage;
+	return item.damageType ? `${item.damage} ${item.damageType}` : item.damage;
 }
 
+/** Attunement copy includes the specific requirement when the source text names one (e.g. "by a Creature of non-Lawful Alignment"). */
 export function attunementLabel(item: IItem): string {
-	return item.attunement ? "Required" : "—";
+	if (!item.attunement) return "—";
+	return item.attunementRequirement ? `Required (${item.attunementRequirement})` : "Required";
+}
+
+/** Prefers the printed price; falls back to the DMG rarity-guideline estimate, marked as such. */
+export function valueLabel(item: IItem): string {
+	if (item.value) return item.value;
+	if (item.valueGp != null) {
+		const gp = item.valueGp.toLocaleString();
+		return item.valueEstimated ? `~${gp} gp (est.)` : `${gp} gp`;
+	}
+	return "—";
 }

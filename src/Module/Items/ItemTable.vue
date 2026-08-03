@@ -4,7 +4,7 @@ import type { IItem } from "@/Module/Items/types";
 import BasePagination from "@/Module/Pagination/BasePagination.vue";
 import type { IPaginatedResponse } from "@/Module/Pagination/types";
 import BaseTable, { type TableColumn } from "@/Module/Table/BaseTable.vue";
-import { hasRarity, itemTypeLabel } from "@/Module/Items/util/itemFormat";
+import { attunementLabel, hasRarity, itemTypeLabel, valueLabel } from "@/Module/Items/util/itemFormat";
 import { watchDebounced } from "@vueuse/core";
 import { AxiosError } from "axios";
 import { storeToRefs } from "pinia";
@@ -16,7 +16,7 @@ function isPaginatedResponse(val: unknown): val is IPaginatedResponse<IItem> {
 }
 
 const props = defineProps<{
-	itemFilter: { rarity: string | null };
+	itemFilter: { rarity: string | null; type: string | null; magic: boolean | null };
 	search: string;
 }>();
 
@@ -33,6 +33,18 @@ watchDebounced(
 watch(
 	() => props.itemFilter.rarity,
 	(rarity) => { filter.rarity = rarity ?? undefined; filter.page = 1; },
+	{ immediate: true },
+);
+
+watch(
+	() => props.itemFilter.type,
+	(type) => { filter.type = type ?? undefined; filter.page = 1; },
+	{ immediate: true },
+);
+
+watch(
+	() => props.itemFilter.magic,
+	(magic) => { filter.magic = magic ?? undefined; filter.page = 1; },
 	{ immediate: true },
 );
 
@@ -60,6 +72,8 @@ const columns: TableColumn[] = [
 	{ key: "name", header: "Name", sortField: "name", sortable: true },
 	{ key: "type", header: "Type", sortField: "type", sortable: true, class: "w-28" },
 	{ key: "rarity", header: "Rarity", sortField: "rarity", sortable: true, class: "w-28" },
+	{ key: "value", header: "Value", sortField: "valueGp", sortable: true, class: "w-28" },
+	{ key: "attunement", header: "Attunement", sortField: "attunement", sortable: true, class: "w-24" },
 	{ key: "source", header: "Source", sortField: "source", sortable: true, class: "w-24" },
 ];
 
@@ -94,6 +108,14 @@ function onSort(e: { sortField: string; sortOrder: "asc" | "desc" }) {
 
 			<template #cell-rarity="{ item }">
 				{{ hasRarity(item.rarity) ? item.rarity : "—" }}
+			</template>
+
+			<template #cell-value="{ item }">
+				{{ valueLabel(item) }}
+			</template>
+
+			<template #cell-attunement="{ item }">
+				{{ attunementLabel(item) }}
 			</template>
 
 			<template #cell-source="{ item }">
