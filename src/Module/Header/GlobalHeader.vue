@@ -4,7 +4,7 @@ import { storeToRefs } from "pinia";
 import { useRoute, useRouter } from "vue-router";
 import MainLogo from "@/Module/Brand/MainLogo.vue";
 import GlobalSearch from "@/Module/GlobalSearch/GlobalSearch.vue";
-import { useAuthStore } from "@/stores/auth";
+import { useUserStore } from "@/Module/User/store/useUserStore";
 
 defineProps<{
 	collapsed?: boolean;
@@ -14,8 +14,8 @@ defineProps<{
 
 const route = useRoute();
 const router = useRouter();
-const authStore = useAuthStore();
-const { isLoggedIn, user } = storeToRefs(authStore);
+const userStore = useUserStore();
+const { isLoggedIn, user } = storeToRefs(userStore);
 
 const searchVisible = ref(false);
 

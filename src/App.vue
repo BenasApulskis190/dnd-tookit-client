@@ -4,6 +4,7 @@ import { useRoute } from "vue-router";
 import { PageLayouts, type PageLayoutKey } from "@/type";
 import SideBar from "@/Module/Sidebar/SideBar.vue";
 import GlobalHeader from "@/Module/Header/GlobalHeader.vue";
+import DrawerHost from "@/Module/Drawer/DrawerHost.vue";
 
 const route = useRoute();
 
@@ -28,4 +29,5 @@ const layoutComponent = computed(() => PageLayouts[layout.value]);
 		</template>
 		<RouterView />
 	</component>
+	<DrawerHost />
 </template>

@@ -9,6 +9,7 @@ export const PageLayouts = {
 //TODO:: add translations
 export const PageCategories = {
 	overview: "Overview",
+	play: "Play",
 	compendum: "Compendium",
 } as const;
 

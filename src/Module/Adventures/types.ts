@@ -29,12 +29,30 @@ export interface IAdventureImage {
 	url: string;
 }
 
+export interface IAdventureMapPin {
+	id: string;
+	label: string;
+	entryName: string;
+	x: number;
+	y: number;
+}
+
+export interface IAdventureMap {
+	id: string;
+	name: string;
+	imagePath: string;
+	imageUrl: string;
+	ordinal: number;
+	pins: IAdventureMapPin[];
+}
+
 export interface IAdventureSectionSummary {
 	id: string;
 	ordinal: number;
 	name: string;
 	headers: unknown;
 	images: IAdventureImage[] | null;
+	maps: IAdventureMap[];
 }
 
 export interface IAdventureNpcSummary {
@@ -60,6 +78,7 @@ export interface IAdventureSection {
 	/** Raw nested 5etools entry tree; feed through `normalizeEntries`. */
 	entries: unknown;
 	images: IAdventureImage[] | null;
+	maps: IAdventureMap[];
 	adventure: { id: string; code: string; name: string };
 }
 

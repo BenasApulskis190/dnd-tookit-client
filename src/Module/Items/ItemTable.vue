@@ -15,10 +15,21 @@ function isPaginatedResponse(val: unknown): val is IPaginatedResponse<IItem> {
 	return !(val instanceof AxiosError);
 }
 
-const props = defineProps<{
-	itemFilter: { rarity: string | null; type: string | null; magic: boolean | null };
-	search: string;
-}>();
+const props = withDefaults(
+	defineProps<{
+		itemFilter: { rarity: string | null; type: string | null; magic: boolean | null };
+		search: string;
+		/** "navigate" (default) pushes to the /items/:id route on row click. "select"
+		 * instead emits `select` with the clicked item, for embedding this table in a
+		 * picker (e.g. adding loot to an encounter) without leaving the current page. */
+		mode?: "navigate" | "select";
+		/** Adds a trailing "Actions" column rendered via the `actions` slot. */
+		showActions?: boolean;
+	}>(),
+	{ mode: "navigate", showActions: false },
+);
+
+const emit = defineEmits<{ select: [item: IItem] }>();
 
 const itemStore = useItemStore();
 const { filter } = itemStore;
@@ -58,24 +69,30 @@ const items = computed(() =>
 
 const router = useRouter();
 
-// Row selection navigates to the detail child route (/items/:id).
+// Row selection navigates to the detail child route (/items/:id) by default,
+// or emits `select` when used as a picker (see `mode` prop).
 const selectedItem = ref<IItem | null>(null);
 
 watch(selectedItem, (item) => {
-	if (item) {
+	if (!item) return;
+
+	if (props.mode === "select") {
+		emit("select", item);
+	} else {
 		void router.push({ name: "items-detail", params: { id: item.id } });
-		selectedItem.value = null;
 	}
+	selectedItem.value = null;
 });
 
-const columns: TableColumn[] = [
+const columns = computed<TableColumn[]>(() => [
 	{ key: "name", header: "Name", sortField: "name", sortable: true },
 	{ key: "type", header: "Type", sortField: "type", sortable: true, class: "w-28" },
 	{ key: "rarity", header: "Rarity", sortField: "rarity", sortable: true, class: "w-28" },
 	{ key: "value", header: "Value", sortField: "valueGp", sortable: true, class: "w-28" },
 	{ key: "attunement", header: "Attunement", sortField: "attunement", sortable: true, class: "w-24" },
 	{ key: "source", header: "Source", sortField: "source", sortable: true, class: "w-24" },
-];
+	...(props.showActions ? [{ key: "actions", header: "", class: "w-24" }] : []),
+]);
 
 function onSort(e: { sortField: string; sortOrder: "asc" | "desc" }) {
 	filter.sortBy = e.sortField;
@@ -120,6 +137,12 @@ function onSort(e: { sortField: string; sortOrder: "asc" | "desc" }) {
 
 			<template #cell-source="{ item }">
 				{{ item.source || "—" }}
+			</template>
+
+			<template v-if="showActions" #cell-actions="{ item }">
+				<div class="flex justify-end" @click.stop>
+					<slot name="actions" :item="item" />
+				</div>
 			</template>
 		</BaseTable>
 

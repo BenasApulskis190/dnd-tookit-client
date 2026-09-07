@@ -18,7 +18,15 @@ export const INDEX_META = {
 
 export type IndexName = keyof typeof INDEX_META;
 
-export function indexMeta(index: string) {
+export interface IIndexMeta {
+	label: string;
+	route: string | null;
+	detail: string | null;
+	color: string;
+	glyph: string;
+}
+
+export function indexMeta(index: string): IIndexMeta {
 	return (
 		INDEX_META[index as IndexName] ?? {
 			label: index,

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, ref, watch } from "vue";
-import { useRoute } from "vue-router";
 import { useQuery } from "@tanstack/vue-query";
+import { AxiosError } from "axios";
 import { monstersApi } from "@/Module/Bestiary/api/monsterApi";
 import type {
 	IMonsterDetail,
@@ -10,11 +10,16 @@ import type {
 } from "@/Module/Bestiary/types";
 import { resoleMonsterImageUrl } from "@/Module/Bestiary/util/monsterImageResolver";
 import EntryText from "@/Module/Bestiary/EntryText.vue";
-import SpellDrawer from "@/Module/Spells/SpellDrawer.vue";
+import SpellPanel from "@/Module/Spells/SpellPanel.vue";
+import ConditionPanel from "@/Module/Conditions/ConditionPanel.vue";
+import { conditionsApi } from "@/Module/Conditions/api/conditionsApi";
+import { useDrawerStore } from "@/Module/Drawer/store/useDrawerStore";
 import {
 	abilityModifier,
 	armorClassLabel,
 	challengeLabel,
+	conditionImmunityGroups,
+	damageListLabel,
 	descriptionParagraphs,
 	hitPointsLabel,
 	proficiencyBonus,
@@ -25,26 +30,17 @@ import {
 	subtitle,
 } from "@/Module/Bestiary/util/monsterFormat";
 
-// `offset` is how far *this* panel itself sits from the screen edge, and
-// `panelWidth` is its own *measured* rendered width (both passed down by
-// whichever drawer wraps this component) — its spells cascade off the real
-// combined value, minus a small peek, rather than a guessed vw step.
-const props = withDefaults(defineProps<{ id?: string; offset?: string; panelWidth?: number }>(), {
-	offset: "0px",
-	panelWidth: 0,
-});
-const CASCADE_PEEK_PX = 60;
-const spellOffset = computed(
-	() => `calc(${props.offset} + ${Math.max(props.panelWidth - CASCADE_PEEK_PX, 0)}px)`,
-);
+const props = defineProps<{ id: string }>();
 
-const route = useRoute();
-const monsterId = computed(() => props.id ?? String(route.params.id ?? ""));
+const drawers = useDrawerStore();
 
 const { data, isLoading, isError, error } = useQuery({
-	queryKey: computed(() => ["monster", monsterId.value]),
-	queryFn: () => monstersApi.getById(monsterId.value),
-	enabled: computed(() => monsterId.value.length > 0),
+	queryKey: computed(() => ["monster", props.id]),
+	queryFn: () => monstersApi.getById(props.id),
+	enabled: computed(() => props.id.length > 0),
+	// Compendium entries are static reference data — once fetched, never
+	// refetch just because the panel showing it was unmounted and remounted.
+	staleTime: Infinity,
 });
 
 const monster = computed(() => (data.value ?? null) as IMonsterDetail | null);
@@ -76,16 +72,55 @@ const abilities = computed(() => {
 });
 
 /** Rows that only appear when the creature actually has the data. */
-const traitRows = computed(() => {
+const traitRowsBefore = computed(() => {
 	const m = monster.value;
 	if (!m) return [];
 
 	return [
 		{ label: "Saving Throws", value: savingThrows(m) },
 		{ label: "Skills", value: skillsLabel(m.skills) },
+		{ label: "Damage Vulnerabilities", value: damageListLabel(m.damageVulnerabilities) },
+		{ label: "Damage Resistances", value: damageListLabel(m.damageResistances) },
+		{ label: "Damage Immunities", value: damageListLabel(m.damageImmunities) },
+	].filter((row) => row.value);
+});
+
+const traitRowsAfter = computed(() => {
+	const m = monster.value;
+	if (!m) return [];
+
+	return [
 		{ label: "Senses", value: sensesLabel(m) },
 		{ label: "Languages", value: m.languages ?? "" },
 	].filter((row) => row.value);
+});
+
+// Condition Immunities gets its own row (rather than joining into traitRows'
+// plain text) so each condition name can link into the Conditions module.
+const conditionGroups = computed(() =>
+	conditionImmunityGroups(monster.value?.conditionImmunities),
+);
+const hasConditionNames = computed(() =>
+	conditionGroups.value.some((group) => group.names.length > 0),
+);
+
+// The full condition list is tiny (~15 entries, one page) so it's cheap to
+// fetch in one shot and match names against it, rather than a per-name lookup.
+const { data: conditionsList } = useQuery({
+	queryKey: ["conditions-lookup"],
+	queryFn: () => conditionsApi.getAll({ limit: 100 }),
+	enabled: hasConditionNames,
+});
+
+const conditionIdByName = computed(() => {
+	const list = conditionsList.value;
+	const map = new Map<string, string>();
+	if (!list || list instanceof AxiosError) return map;
+
+	for (const condition of list.data) {
+		map.set(condition.name.toLowerCase(), condition.id);
+	}
+	return map;
 });
 
 const ACTION_SECTIONS: { type: string; title: string }[] = [
@@ -130,13 +165,17 @@ const spellGroups = computed(() => {
 		}));
 });
 
-// Clicking a spell opens it one cascade step further left of this panel.
-const selectedSpellId = ref<string | null>(null);
-const spellDrawerVisible = ref(false);
-
+// Clicking a spell opens it one cascade step further — the drawer store
+// figures out the offset from whatever's already open, no manual threading.
 function openSpell(id: string) {
-	selectedSpellId.value = id;
-	spellDrawerVisible.value = true;
+	drawers.open("spell", { component: SpellPanel, props: { id }, width: "w-[45vw]" });
+}
+
+// Same cascade pattern for a clicked condition immunity.
+function openCondition(name: string) {
+	const id = conditionIdByName.value.get(name.toLowerCase());
+	if (!id) return;
+	drawers.open("condition", { component: ConditionPanel, props: { id }, width: "w-[45vw]" });
 }
 </script>
 
@@ -205,7 +244,33 @@ function openSpell(id: string) {
 
 			<!-- Proficiencies, senses, challenge -->
 			<dl class="space-y-1 text-sm">
-				<div v-for="row in traitRows" :key="row.label" class="flex gap-2">
+				<div v-for="row in traitRowsBefore" :key="row.label" class="flex gap-2">
+					<dt class="shrink-0 font-semibold text-ink-soft">{{ row.label }}</dt>
+					<dd class="text-ink-mute">{{ row.value }}</dd>
+				</div>
+				<div v-if="conditionGroups.length" class="flex gap-2">
+					<dt class="shrink-0 font-semibold text-ink-soft">Condition Immunities</dt>
+					<dd class="text-ink-mute">
+						<template v-for="(group, gi) in conditionGroups" :key="gi">
+							<span v-if="group.preNote">{{ group.preNote }} </span>
+							<span v-if="group.special">{{ group.special }}</span>
+							<template v-for="(name, ni) in group.names" :key="name">
+								<button
+									v-if="conditionIdByName.has(name.toLowerCase())"
+									type="button"
+									class="rounded text-condition underline decoration-dotted underline-offset-2 hover:bg-condition/15"
+									@click="openCondition(name)"
+								>
+									{{ name }}</button
+								><span v-else>{{ name }}</span
+								><span v-if="ni < group.names.length - 1">, </span>
+							</template>
+							<span v-if="group.note"> {{ group.note }}</span>
+							<span v-if="gi < conditionGroups.length - 1">; </span>
+						</template>
+					</dd>
+				</div>
+				<div v-for="row in traitRowsAfter" :key="row.label" class="flex gap-2">
 					<dt class="shrink-0 font-semibold text-ink-soft">{{ row.label }}</dt>
 					<dd class="text-ink-mute">{{ row.value }}</dd>
 				</div>
@@ -289,13 +354,6 @@ function openSpell(id: string) {
 					</p>
 				</div>
 			</section>
-
-			<SpellDrawer
-				v-model:visible="spellDrawerVisible"
-				:id="selectedSpellId"
-				position="right"
-				:offset="spellOffset"
-			/>
 		</article>
 	</div>
 </template>

@@ -8,8 +8,10 @@ import LoginPage from "@/Pages/LoginPage.vue";
 import ProfilePage from "@/Pages/ProfilePage.vue";
 import { PageCategories, type PageLayoutKey } from "@/type";
 import DashboradPage from "@/Pages/DashboradPage.vue";
-import EncounterBuilder from "@/Pages/EncounterBuilder.vue";
-import SavedEncountersPage from "@/Pages/SavedEncountersPage.vue";
+import EncountersPage from "@/Pages/EncountersPage.vue";
+import EncounterDetailPage from "@/Pages/EncounterDetailPage.vue";
+import PartiesPage from "@/Pages/PartiesPage.vue";
+import CharactersPage from "@/Pages/CharactersPage.vue";
 import BestiaryPage from "@/Pages/BestiaryPage.vue";
 import MonsterDetailView from "@/Module/Bestiary/MonsterDetailView.vue";
 import SpellsPage from "@/Pages/SpellsPage.vue";
@@ -31,7 +33,6 @@ import NpcDetailView from "@/Module/Npcs/NpcDetailView.vue";
 import AdventuresPage from "@/Pages/AdventuresPage.vue";
 import AdventureDetailPage from "@/Pages/AdventureDetailPage.vue";
 import AdventureSectionPage from "@/Pages/AdventureSectionPage.vue";
-import MapsPage from "@/Pages/MapsPage.vue";
 import CombatManager from "@/Pages/CombatManager.vue";
 
 
@@ -61,26 +62,50 @@ export const routes: RouteRecordRaw[] = [
 		},
 	},
 	{
-		path: "/encounters",
-		name: "encounters",
-		component: SavedEncountersPage,
+		path: "/parties",
+		name: "parties",
+		component: PartiesPage,
 		meta: {
 			layout: "default",
 			requiresAuth: true,
-			category: "overview",
+			category: "play",
+			glyph: "☘",
+			color: "var(--c-party)",
+		},
+	},
+	{
+		path: "/characters",
+		name: "characters",
+		component: CharactersPage,
+		meta: {
+			layout: "default",
+			requiresAuth: true,
+			category: "play",
+			glyph: "♜",
+			color: "var(--c-character)",
+		},
+	},
+	{
+		path: "/encounters",
+		name: "encounters",
+		component: EncountersPage,
+		meta: {
+			layout: "default",
+			requiresAuth: true,
+			category: "play",
 			glyph: "⚔",
 			color: "var(--c-rule)",
 		},
 	},
 	{
-		path: "/encounters/create",
-		name: "encounters-create",
-		component: EncounterBuilder,
+		path: "/encounters/:id",
+		name: "encounters-detail",
+		component: EncounterDetailPage,
 		meta: {
 			layout: "default",
 			requiresAuth: true,
 			hideFromNav: true,
-			category: "overview",
+			category: "play",
 		},
 	},
 	{
@@ -309,18 +334,6 @@ export const routes: RouteRecordRaw[] = [
 		},
 	},
 	{
-		path: "/maps",
-		name: "maps",
-		component: MapsPage,
-		meta: {
-			layout: "default",
-			requiresAuth: true,
-			category: "compendum",
-			glyph: "◉",
-			color: "var(--c-gear)",
-		},
-	},
-	{
 		path: "/combat/:id",
 		name: "combat",
 		component: CombatManager,
@@ -328,7 +341,7 @@ export const routes: RouteRecordRaw[] = [
 			layout: "default",
 			requiresAuth: true,
 			hideFromNav: true,
-			category: "compendum",
+			category: "play",
 		},
 	},
 	{

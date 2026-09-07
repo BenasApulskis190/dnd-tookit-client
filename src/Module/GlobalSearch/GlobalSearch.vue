@@ -7,8 +7,22 @@ import { AxiosError } from "axios";
 import BaseModal from "@/Module/Modal/BaseModal.vue";
 import BaseSearchBar from "@/Module/SearchBar/BaseSearchBar.vue";
 import { useGlobalSearchStore } from "@/Module/GlobalSearch/store/useGlobalSearchStore";
-import { indexMeta } from "@/Module/GlobalSearch/indices";
+import { indexMeta, type IndexName } from "@/Module/GlobalSearch/indices";
+import GlobalSearchResultPanel from "@/Module/GlobalSearch/GlobalSearchResultPanel.vue";
 import type { IGlobalSearchHit } from "@/Module/GlobalSearch/types";
+
+// Indices without an inline Details component (e.g. classes, which the
+// router deliberately keeps as a full page — "far more than a drawer can
+// hold") still fall back to navigating instead of expanding in place.
+const INLINE_INDICES = new Set<IndexName>([
+	"monsters",
+	"spells",
+	"conditions",
+	"backgrounds",
+	"feats",
+	"items",
+	"races",
+]);
 
 const visible = defineModel<boolean>("visible", { default: false });
 
@@ -20,12 +34,17 @@ const { data, isLoading, isError } = storeToRefs(store);
 const query = ref("");
 const activeIndex = ref(0);
 
+// The hit currently expanded inline, accordion-style, under its list item —
+// only one open at a time. Null when nothing is expanded.
+const expandedHit = ref<{ index: IndexName; id: string } | null>(null);
+
 watchDebounced(
 	query,
 	(val) => {
 		filter.q = val;
 		filter.page = 1;
 		activeIndex.value = 0;
+		expandedHit.value = null;
 	},
 	{ debounce: 300 },
 );
@@ -50,16 +69,30 @@ const groups = computed(() => {
 		bucket.push(hit);
 		byIndex.set(hit._index, bucket);
 	}
-	return [...byIndex.entries()].map(([index, items]) => ({
-		index,
-		meta: indexMeta(index),
-		items,
-	}));
+	let running = 0;
+	return [...byIndex.entries()].map(([index, items]) => {
+		const group = { index, meta: indexMeta(index), items, startIndex: running };
+		running += items.length;
+		return group;
+	});
 });
+
+// Same hits, flattened in the exact order they're rendered (grouped by
+// index) — arrow-key navigation and Enter must index into this, not the raw
+// `hits` array, since grouping reorders same-index hits to sit together.
+const flatHits = computed(() => groups.value.flatMap((g) => g.items));
 
 const hasQuery = computed(() => query.value.trim().length > 0);
 
+function isExpanded(hit: IGlobalSearchHit) {
+	return expandedHit.value?.index === hit._index && expandedHit.value?.id === hit.id;
+}
+
 function selectHit(hit: IGlobalSearchHit) {
+	if (INLINE_INDICES.has(hit._index)) {
+		expandedHit.value = isExpanded(hit) ? null : { index: hit._index, id: hit.id };
+		return;
+	}
 	const meta = indexMeta(hit._index);
 	visible.value = false;
 	if (meta.detail) {
@@ -75,18 +108,19 @@ watch(visible, (open) => {
 		query.value = "";
 		store.reset();
 		activeIndex.value = 0;
+		expandedHit.value = null;
 	}
 });
 
 function moveActive(delta: number) {
-	const count = hits.value.length;
+	const count = flatHits.value.length;
 	if (count === 0) return;
 	activeIndex.value = (activeIndex.value + delta + count) % count;
 	nextTick(scrollActiveIntoView);
 }
 
 function onEnter() {
-	const hit = hits.value[activeIndex.value];
+	const hit = flatHits.value[activeIndex.value];
 	if (hit) selectHit(hit);
 }
 
@@ -96,29 +130,22 @@ function scrollActiveIntoView() {
 		?.querySelector<HTMLElement>(`[data-hit-index="${activeIndex.value}"]`)
 		?.scrollIntoView({ block: "nearest" });
 }
-
-// Global flat index so arrow-key selection can cross group boundaries.
-function flatIndexFor(index: string, offset: number): number {
-	let running = 0;
-	for (const group of groups.value) {
-		if (group.index === index) return running + offset;
-		running += group.items.length;
-	}
-	return offset;
-}
 </script>
 
 <template>
-	<BaseModal v-model:visible="visible" size="full-screen">
+	<BaseModal
+		v-model:visible="visible"
+		size="full-screen"
+		@keydown.down.prevent="moveActive(1)"
+		@keydown.up.prevent="moveActive(-1)"
+		@keydown.enter.prevent="onEnter"
+	>
 		<template #header>
 			<BaseSearchBar
 				v-model="query"
 				:loading="isLoading && hasQuery"
 				placeholder="Search anything…"
 				class="max-w-none"
-				@keydown.down.prevent="moveActive(1)"
-				@keydown.up.prevent="moveActive(-1)"
-				@keydown.enter.prevent="onEnter"
 			/>
 		</template>
 
@@ -152,9 +179,10 @@ function flatIndexFor(index: string, offset: number): number {
 						<li v-for="(hit, i) in group.items" :key="hit.id">
 							<button
 								type="button"
-								:data-hit-index="flatIndexFor(group.index, i)"
+								:data-hit-index="group.startIndex + i"
+								:aria-expanded="isExpanded(hit)"
 								class="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-bg-elev2"
-								:class="{ 'bg-bg-elev2': flatIndexFor(group.index, i) === activeIndex }"
+								:class="{ 'bg-bg-elev2': group.startIndex + i === activeIndex || isExpanded(hit) }"
 								@click="selectHit(hit)"
 							>
 								<span
@@ -165,7 +193,26 @@ function flatIndexFor(index: string, offset: number): number {
 								<span v-if="hit.source" class="shrink-0 text-xs text-ink-faint">
 									{{ hit.source }}
 								</span>
+								<svg
+									v-if="INLINE_INDICES.has(hit._index)"
+									width="14"
+									height="14"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									class="shrink-0 text-ink-faint transition-transform"
+									:class="{ 'rotate-180': isExpanded(hit) }"
+									aria-hidden="true"
+								>
+									<path d="m6 9 6 6 6-6" />
+								</svg>
 							</button>
+							<div v-if="isExpanded(hit)" class="mt-1 mb-1">
+								<GlobalSearchResultPanel :index="hit._index" :id="hit.id" />
+							</div>
 						</li>
 					</ul>
 				</div>

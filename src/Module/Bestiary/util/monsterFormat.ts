@@ -156,6 +156,65 @@ export function savingThrows(monster: IMonsterDetail): string {
 		.join(", ");
 }
 
+/**
+ * Damage resistance/immunity/vulnerability and condition immunity entries
+ * are usually a plain string array, but 5etools sometimes wraps a subset in
+ * an object carrying a `note` (e.g. "from nonmagical weapons") or `preNote`
+ * (e.g. "While in bear form:") qualifier, or a freeform `special` string.
+ */
+export type IDamageBucketEntry =
+	| string
+	| {
+			resist?: string[];
+			immune?: string[];
+			vulnerable?: string[];
+			conditionImmune?: string[];
+			note?: string;
+			preNote?: string;
+			special?: string;
+	  };
+
+function damageEntryLabel(entry: IDamageBucketEntry): string {
+	if (typeof entry === "string") return entry;
+	if (entry.special) return entry.special;
+
+	const list =
+		entry.resist ?? entry.immune ?? entry.vulnerable ?? entry.conditionImmune ?? [];
+	return [entry.preNote, list.join(", "), entry.note].filter(Boolean).join(" ");
+}
+
+/** Formats a damage resistance/immunity/vulnerability or condition immunity column. */
+export function damageListLabel(entries: unknown): string {
+	const parsed = parseJsonField<IDamageBucketEntry[]>(entries);
+	if (!parsed?.length) return "";
+
+	return parsed.map(damageEntryLabel).join("; ");
+}
+
+/** A condition-immunity bucket split into linkable names plus its surrounding qualifier text. */
+export interface IConditionImmunityGroup {
+	preNote?: string;
+	names: string[];
+	note?: string;
+	special?: string;
+}
+
+/**
+ * Same source shape as `damageListLabel`, but keeps each condition name
+ * separate (rather than joined into one string) so the caller can render
+ * individual names as links into the Conditions module.
+ */
+export function conditionImmunityGroups(entries: unknown): IConditionImmunityGroup[] {
+	const parsed = parseJsonField<IDamageBucketEntry[]>(entries);
+	if (!parsed?.length) return [];
+
+	return parsed.map((entry) => {
+		if (typeof entry === "string") return { names: [entry] };
+		if (entry.special) return { names: [], special: entry.special };
+		return { preNote: entry.preNote, names: entry.conditionImmune ?? [], note: entry.note };
+	});
+}
+
 export function skillsLabel(skills: unknown): string {
 	const parsed = parseJsonField<Record<string, string | number>>(skills);
 	if (!parsed || typeof parsed !== "object") return "";

@@ -1,5 +1,3 @@
-import type { IMonsterDetail } from "@/Module/Bestiary/types";
-
 export interface INpcAdventureRef {
 	id: string;
 	code: string;
@@ -30,10 +28,7 @@ export interface INpc {
 	monster: INpcMonsterSummary | null;
 }
 
-/** `GET /npcs/:id` nests the full monster stat block instead of the row summary. */
-export interface INpcDetail extends Omit<INpc, "monster"> {
-	monster: IMonsterDetail | null;
-}
+export type INpcDetail = INpc;
 
 export interface INpcFilter {
 	q?: string;

@@ -8,7 +8,10 @@ import { resolveApiUrl } from "@/utils/apiUrl";
 const props = defineProps<{ section: IAdventureSection }>();
 
 const blocks = computed(() => normalizeEntries(props.section.entries));
-const images = computed(() => props.section.images ?? []);
+const images = computed(() => {
+	const mapImagePaths = new Set(props.section.maps.map((map) => map.imagePath));
+	return (props.section.images ?? []).filter((image) => !mapImagePaths.has(image.path));
+});
 </script>
 
 <template>

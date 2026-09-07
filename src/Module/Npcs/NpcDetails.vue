@@ -1,27 +1,24 @@
 <script lang="ts" setup>
-import { computed, ref } from "vue";
+import { computed } from "vue";
 import { RouterLink } from "vue-router";
 import type { INpcDetail } from "@/Module/Npcs/types";
 import EntryText from "@/Module/Bestiary/EntryText.vue";
-import MonsterDrawer from "@/Module/Bestiary/MonsterDrawer.vue";
+import MonsterDetails from "@/Module/Bestiary/MonsterDetails.vue";
+import { useDrawerStore } from "@/Module/Drawer/store/useDrawerStore";
 import { resolveApiUrl } from "@/utils/apiUrl";
 
-const props = withDefaults(defineProps<{ npc: INpcDetail; panelWidth?: number }>(), {
-	panelWidth: 0,
-});
+const props = defineProps<{ npc: INpcDetail }>();
+
+const drawers = useDrawerStore();
 
 const tokenUrl = computed(() => resolveApiUrl(props.npc.tokenUrl));
 const monster = computed(() => props.npc.monster);
 
-// Opens the stat block in its own right-side drawer, offset by this panel's
-// *measured* width (not a guessed vw fraction) minus a small peek so a sliver
-// of it stays visible behind the stat block. Its own spells cascade the same
-// way in turn (see MonsterDetails' `offset`/`panelWidth` props).
-const CASCADE_PEEK_PX = 60;
-const monsterDrawerVisible = ref(false);
-const monsterOffset = computed(
-	() => `${Math.max(props.panelWidth - CASCADE_PEEK_PX, 0)}px`,
-);
+function openMonster() {
+	const id = monster.value?.id;
+	if (!id) return;
+	drawers.open("monster", { component: MonsterDetails, props: { id }, width: "w-[45vw]" });
+}
 </script>
 
 <template>
@@ -91,18 +88,11 @@ const monsterOffset = computed(
 					v-if="monster.id"
 					type="button"
 					class="shrink-0 rounded bg-npc/15 px-2 py-1 text-xs font-semibold text-npc hover:bg-npc/25"
-					@click="monsterDrawerVisible = true"
+					@click="openMonster"
 				>
 					View stat block →
 				</button>
 			</div>
 		</section>
-
-		<MonsterDrawer
-			v-model:visible="monsterDrawerVisible"
-			:id="monster?.id ?? null"
-			position="right"
-			:offset="monsterOffset"
-		/>
 	</article>
 </template>

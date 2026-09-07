@@ -28,6 +28,30 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null;
 }
 
+/**
+ * Finds a named heading anywhere in a raw entries tree (e.g. a chapter's
+ * `"1. Cave Mouth"` sub-section) and returns its body, ready to feed into
+ * `normalizeEntries`. Used to resolve a map pin's description from the
+ * chapter text it was authored against, rather than duplicating it.
+ */
+export function findEntryByName(value: unknown, name: string): unknown {
+	return searchEntryByName(parseJsonField<unknown>(value), name);
+}
+
+function searchEntryByName(node: unknown, name: string): unknown {
+	if (Array.isArray(node)) {
+		for (const item of node) {
+			const found = searchEntryByName(item, name);
+			if (found != null) return found;
+		}
+		return null;
+	}
+	if (!isRecord(node)) return null;
+	if (node.name === name) return node.entries ?? null;
+	if (Array.isArray(node.entries)) return searchEntryByName(node.entries, name);
+	return null;
+}
+
 export function normalizeEntries(value: unknown): EntryBlock[] {
 	const parsed = parseJsonField<unknown>(value);
 	if (parsed == null) return [];

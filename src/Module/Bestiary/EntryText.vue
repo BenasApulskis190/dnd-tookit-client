@@ -12,7 +12,6 @@ export type EntryAccent =
 	| "npc"
 	| "adventure";
 
-// Roll buttons pick up the accent of whatever entity's text they render.
 const props = withDefaults(
 	defineProps<{ text: string; accent?: EntryAccent }>(),
 	{ accent: "monster" },

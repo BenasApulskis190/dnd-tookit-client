@@ -154,18 +154,24 @@ export function durationLabel(spell: ISpell): string {
 	return base;
 }
 
-/** Description / higher-level entries arrive as JSON-encoded arrays of strings. */
+/**
+ * Description / higher-level entries arrive as JSON-encoded 5etools "entries" trees:
+ * plain strings mixed with `{ type: "entries", name, entries: [...] }` blocks that can
+ * themselves nest further blocks (e.g. higherLevel is an array wrapping one such block).
+ */
+function flattenEntries(value: unknown): string[] {
+	if (typeof value === "string") return [value];
+	if (Array.isArray(value)) return value.flatMap(flattenEntries);
+	if (value && typeof value === "object" && "entries" in value) {
+		return flattenEntries((value as { entries: unknown }).entries);
+	}
+	return [];
+}
+
 export function entryParagraphs(value: unknown): string[] {
 	const parsed = parseJsonField<unknown>(value);
 	if (parsed == null) return [];
-
-	const list = Array.isArray(parsed)
-		? parsed
-		: typeof parsed === "object" && "entries" in parsed
-			? ((parsed as { entries: unknown[] }).entries ?? [])
-			: [parsed];
-
-	return list.filter((entry): entry is string => typeof entry === "string");
+	return flattenEntries(parsed);
 }
 
 interface SpellClass {

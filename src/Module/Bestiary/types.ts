@@ -82,6 +82,10 @@ export interface IMonster {
 	passive?: number;
 	languages?: string;
 	cr: string;
+	challengeRating?: string;
+	dexScore?: number | null;
+	hitPointsAvg?: number | null;
+	armorClass?: number | null;
 	trait?: IMonsterTrait[];
 	spellcasting?: IMonsterTrait[];
 	action?: IMonsterTrait[];
@@ -93,9 +97,11 @@ export interface IMonster {
 
 /**
  * What `GET /monsters/:id` actually returns — the flat Prisma row, not the
- * nested 5etools `IMonster` shape above. `tags`, `alignment`, `skills` and the
- * trait/action `description` fields are Postgres `Json` columns and arrive as
- * JSON-encoded strings; run them through `parseJsonField` before use.
+ * nested 5etools `IMonster` shape above. `tags`, `alignment`, `skills`,
+ * `damageVulnerabilities`, `damageResistances`, `damageImmunities`,
+ * `conditionImmunities` and the trait/action `description` fields are
+ * Postgres `Json` columns and arrive as JSON-encoded strings; run them
+ * through `parseJsonField` before use.
  */
 export interface IMonsterEntry {
 	id: string;
@@ -136,6 +142,10 @@ export interface IMonsterDetail {
 	wisSave?: number | null;
 	chaSave?: number | null;
 	skills: unknown;
+	damageVulnerabilities: unknown;
+	damageResistances: unknown;
+	damageImmunities: unknown;
+	conditionImmunities: unknown;
 	senses?: string | null;
 	passivePerception?: number | null;
 	languages?: string | null;

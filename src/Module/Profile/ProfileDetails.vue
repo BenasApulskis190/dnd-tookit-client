@@ -1,14 +1,14 @@
 <script lang="ts" setup>
 import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
-import { useAuthStore } from "@/stores/auth";
+import { useUserStore } from "@/Module/User/store/useUserStore";
 
 const router = useRouter();
-const authStore = useAuthStore();
-const { user } = storeToRefs(authStore);
+const userStore = useUserStore();
+const { user } = storeToRefs(userStore);
 
 function handleLogout() {
-	authStore.logout();
+	userStore.logout();
 	router.push("/login");
 }
 </script>
