@@ -5,3 +5,7 @@ import SpellPanel from "@/Module/Spells/SpellPanel.vue";
 useRouteDrawer({ name: "spell-detail", component: SpellPanel, listRoute: "spells", width: "w-[45vw]" });
 </script>
 
+
+<template>
+	<!-- Renders through DrawerHost, not here. -->
+</template>

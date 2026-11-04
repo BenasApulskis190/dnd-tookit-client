@@ -5,3 +5,7 @@ import RacePanel from "@/Module/Races/RacePanel.vue";
 useRouteDrawer({ name: "race-detail", component: RacePanel, listRoute: "races", width: "w-[45vw]" });
 </script>
 
+
+<template>
+	<!-- Renders through DrawerHost, not here. -->
+</template>

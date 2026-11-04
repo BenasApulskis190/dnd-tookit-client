@@ -5,3 +5,7 @@ import ItemPanel from "@/Module/Items/ItemPanel.vue";
 useRouteDrawer({ name: "item-detail", component: ItemPanel, listRoute: "items", width: "w-[45vw]" });
 </script>
 
+
+<template>
+	<!-- Renders through DrawerHost, not here. -->
+</template>

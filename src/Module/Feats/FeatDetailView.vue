@@ -5,3 +5,7 @@ import FeatPanel from "@/Module/Feats/FeatPanel.vue";
 useRouteDrawer({ name: "feat-detail", component: FeatPanel, listRoute: "feats", width: "w-[45vw]" });
 </script>
 
+
+<template>
+	<!-- Renders through DrawerHost, not here. -->
+</template>

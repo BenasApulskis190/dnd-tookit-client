@@ -1,8 +1,10 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 export const api = axios.create({
-	// baseURL: import.meta.env.VITE_API_URL || "/api",
-	baseURL: 'http://api.dev/api' || "/api",
+	// Defaults to a same-origin path so the httpOnly refresh_token cookie is
+	// first-party — a cross-site base (http://api.dev/api) makes the browser
+	// drop the SameSite=Lax cookie and every silent refresh fails.
+	baseURL: import.meta.env.VITE_API_URL || "/api",
 	// refresh_token cookie is httpOnly + credentials: true on the API's CORS config
 	withCredentials: true,
 	headers: {

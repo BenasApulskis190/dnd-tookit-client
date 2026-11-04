@@ -41,15 +41,16 @@ function errorMessage(result: unknown, fallback: string): string {
 }
 
 export const useUserStore = defineStore("userStore", () => {
-	// Hydrate synchronously from localStorage so a page refresh doesn't have
-	// to wait on a network round trip just to know whether we're logged in —
-	// the httpOnly refresh cookie can't be relied on for that here since
-	// dnd.dev/api.dev are cross-site and the cookie is SameSite=Lax.
+	// Hydrate synchronously from localStorage so a page refresh doesn't have to
+	// wait on a network round trip just to know whether we're logged in — the
+	// refresh cookie is httpOnly, so JS can't read it to answer that question.
 	const stored = loadStoredSession();
 	const user = ref<IUser | null>(stored?.user ?? null);
 	const accessToken = ref<string | null>(stored?.accessToken ?? null);
 
 	const isLoggedIn = computed(() => !!accessToken.value);
+
+	let inFlightRefresh: Promise<boolean> | null = null;
 
 	function setSession(response: IAuthResponse) {
 		accessToken.value = response.accessToken;
@@ -88,16 +89,29 @@ export const useUserStore = defineStore("userStore", () => {
 	// expired mid-session) to try minting a new one from the refresh cookie.
 	// Resolves to false instead of throwing so the caller can fall back to
 	// logging out.
-	async function refresh(): Promise<boolean> {
-		const result = await profileApi.refresh();
-		if (isAxiosError(result)) return false;
+	//
+	// Refresh tokens rotate — /auth/refresh revokes the token it consumed — so
+	// concurrent 401s (a page that fires several authed requests at once) must
+	// share a single in-flight call. Without this the first refresh succeeds and
+	// the rest 401 on an already-revoked token, tearing down a live session.
+	function refresh(): Promise<boolean> {
+		if (!inFlightRefresh) {
+			inFlightRefresh = (async () => {
+				const result = await profileApi.refresh();
+				if (isAxiosError(result)) return false;
 
-		setSession(result);
-		return true;
+				setSession(result);
+				return true;
+			})().finally(() => {
+				inFlightRefresh = null;
+			});
+		}
+		return inFlightRefresh;
 	}
 
 	async function logout() {
 		await profileApi.logout();
+		inFlightRefresh = null;
 		clearSession();
 	}
 

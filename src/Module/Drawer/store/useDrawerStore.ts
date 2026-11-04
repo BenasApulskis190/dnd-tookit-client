@@ -1,12 +1,16 @@
 import type { IDrawerConfig, IDrawerInstance } from "@/Module/Drawer/types";
 import { defineStore } from "pinia";
-import { computed, reactive } from "vue";
+import { useWindowSize } from "@vueuse/core";
+import { computed, markRaw, reactive } from "vue";
 
 const BASE_Z_INDEX = 1000;
 const Z_INDEX_STEP = 10;
+/** Sliver of page kept visible beside the deepest drawer in a cascade. */
+const MIN_EDGE_GAP = 16;
 
 export const useDrawerStore = defineStore("drawerStore", () => {
 	const stack = reactive<IDrawerInstance[]>([]);
+	const { width: viewportWidth } = useWindowSize();
 	const resolvers = new Map<string, () => void>();
 
 	// Closing instances are dropped from all of these so the rest of the stack
@@ -33,10 +37,23 @@ export const useDrawerStore = defineStore("drawerStore", () => {
 		const index = indexOf(name);
 		const instance = index === -1 ? undefined : activeStack.value[index];
 		if (!instance) return 0;
-		return activeStack.value
-			.slice(0, index)
-			.filter((earlier) => earlier.position === instance.position)
-			.reduce((sum, earlier) => sum + earlier.widthPx, 0);
+
+		const peers = activeStack.value.filter((entry) => entry.position === instance.position);
+		const rawOffsetAt = (depth: number) =>
+			peers.slice(0, depth).reduce((sum, earlier) => sum + earlier.widthPx, 0);
+
+		const raw = rawOffsetAt(peers.indexOf(instance));
+
+		// The deepest peer sets how far the cascade spreads. Once stacking it at
+		// full width would push it past the far edge (3+ drawers on a narrow
+		// viewport), compress every offset by the same factor so the whole stack
+		// stays on screen and each drawer still peeks out from under the next.
+		const deepestWidth = peers[peers.length - 1]?.widthPx ?? instance.widthPx;
+		const rawSpread = rawOffsetAt(peers.length - 1);
+		const maxSpread = Math.max(0, viewportWidth.value - deepestWidth - MIN_EDGE_GAP);
+		if (rawSpread <= maxSpread) return raw;
+
+		return (raw * maxSpread) / rawSpread;
 	}
 
 	function setWidth(name: string, widthPx: number) {
@@ -51,6 +68,10 @@ export const useDrawerStore = defineStore("drawerStore", () => {
 		const config = Object.fromEntries(
 			Object.entries(rawConfig).filter(([, value]) => value !== undefined),
 		) as IDrawerConfig;
+
+		// The stack is `reactive`, so a component object put in it would be deeply
+		// proxied — pointless overhead, and Vue warns about it.
+		if (config.component) config.component = markRaw(config.component);
 
 		const existing = stack.find((instance) => instance.name === name);
 		if (existing) {

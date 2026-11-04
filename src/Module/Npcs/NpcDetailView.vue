@@ -5,3 +5,7 @@ import NpcPanel from "@/Module/Npcs/NpcPanel.vue";
 useRouteDrawer({ name: "npc-detail", component: NpcPanel, listRoute: "npcs", width: "w-[45vw]" });
 </script>
 
+
+<template>
+	<!-- Renders through DrawerHost, not here. -->
+</template>

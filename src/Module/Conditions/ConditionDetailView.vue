@@ -10,3 +10,7 @@ useRouteDrawer({
 });
 </script>
 
+
+<template>
+	<!-- Renders through DrawerHost, not here. -->
+</template>

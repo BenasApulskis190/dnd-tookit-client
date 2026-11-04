@@ -27,6 +27,7 @@
 	--pastel-ember: #fdba74;
 	--pastel-gold: #fcd34d;
 	--pastel-cyan: #67e8f9;
+	--pastel-sage: #bef264;
 
 	--c-spell: var(--pastel-lavender);
 	--c-monster: var(--pastel-rose);
@@ -40,6 +41,7 @@
 	--c-background: var(--pastel-jade);
 	--c-npc: var(--pastel-teal);
 	--c-adventure: var(--pastel-ember);
+	--c-map: var(--pastel-sage);
 	--c-party: var(--pastel-gold);
 	--c-character: var(--pastel-cyan);
 
@@ -94,6 +96,7 @@
 	--color-background: #86efac;
 	--color-npc: #5eead4;
 	--color-adventure: #fdba74;
+	--color-map: #bef264;
 	--color-party: #fcd34d;
 	--color-character: #67e8f9;
 

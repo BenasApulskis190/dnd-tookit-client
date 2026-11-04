@@ -30,6 +30,8 @@ import RacesPage from "@/Pages/RacesPage.vue";
 import RaceDetailView from "@/Module/Races/RaceDetailView.vue";
 import NpcsPage from "@/Pages/NpcsPage.vue";
 import NpcDetailView from "@/Module/Npcs/NpcDetailView.vue";
+import MapsPage from "@/Pages/MapsPage.vue";
+import MapDetailPage from "@/Pages/MapDetailPage.vue";
 import AdventuresPage from "@/Pages/AdventuresPage.vue";
 import AdventureDetailPage from "@/Pages/AdventureDetailPage.vue";
 import AdventureSectionPage from "@/Pages/AdventureSectionPage.vue";
@@ -296,6 +298,31 @@ export const routes: RouteRecordRaw[] = [
 				meta: { layout: "default", requiresAuth: true, category: "compendum" },
 			},
 		],
+	},
+	{
+		path: "/maps",
+		name: "maps",
+		component: MapsPage,
+		meta: {
+			layout: "default",
+			requiresAuth: true,
+			category: "compendum",
+			glyph: "⛰",
+			color: "var(--c-map)",
+		},
+	},
+	{
+		// The pin viewer needs the full width a drawer can't give, so a map's
+		// detail is its own page (mirrors the Adventures pattern).
+		path: "/maps/:id",
+		name: "maps-detail",
+		component: MapDetailPage,
+		meta: {
+			layout: "default",
+			requiresAuth: true,
+			hideFromNav: true,
+			category: "compendum",
+		},
 	},
 	{
 		path: "/adventures",

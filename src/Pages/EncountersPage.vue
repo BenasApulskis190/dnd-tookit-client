@@ -4,6 +4,7 @@ import { isAxiosError } from "axios";
 import { useEncounterStore } from "@/Module/Encounters/store/useEncounterStore";
 import EncounterCard from "@/Module/Encounters/EncounterCard.vue";
 import EncounterFormModal from "@/Module/Encounters/EncounterFormModal.vue";
+import EncounterGeneratorModal from "@/Module/Encounters/EncounterGeneratorModal.vue";
 import type { IEncounter } from "@/Module/Encounters/types";
 
 const encounterStore = useEncounterStore();
@@ -13,6 +14,7 @@ const encounters = computed(() =>
 );
 
 const showFormModal = ref(false);
+const showGeneratorModal = ref(false);
 const editingEncounter = ref<IEncounter | undefined>(undefined);
 
 function openCreateModal() {
@@ -29,6 +31,13 @@ function openEditModal(encounter: IEncounter) {
 <template>
 	<div class="flex items-start justify-between gap-4 mb-6">
 		<div class="flex-1" />
+
+		<button
+			class="inline-flex items-center gap-1.5 rounded-lg border border-accent px-4 py-2 text-sm font-medium text-accent hover:bg-accent/10 transition-colors"
+			@click="showGeneratorModal = true"
+		>
+			⚄ Generate encounter
+		</button>
 
 		<button
 			class="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-bg hover:opacity-90 transition-opacity"
@@ -53,6 +62,12 @@ function openEditModal(encounter: IEncounter) {
 		>
 			+ Create your first encounter
 		</button>
+		<button
+			class="inline-flex items-center gap-1.5 rounded-lg border border-accent px-4 py-2 text-sm font-medium text-accent hover:bg-accent/10 transition-colors"
+			@click="showGeneratorModal = true"
+		>
+			⚄ Or generate one
+		</button>
 	</div>
 
 	<div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -65,4 +80,5 @@ function openEditModal(encounter: IEncounter) {
 	</div>
 
 	<EncounterFormModal v-model:visible="showFormModal" :encounter="editingEncounter" />
+	<EncounterGeneratorModal v-model:visible="showGeneratorModal" />
 </template>
